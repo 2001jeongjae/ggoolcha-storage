@@ -1,0 +1,38 @@
+rules_version = '2';
+
+// GGOOLCHA STORAGE 보안 규칙
+// - 입장 코드를 맞힌 기기(members 명단)만 재고 데이터를 읽고 쓸 수 있다.
+// - 입장 코드는 config/club 문서의 code 값. 이 문서는 누구도 앱에서 읽거나 고칠 수 없고,
+//   Firebase 콘솔에서만 바꾼다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isMember() {
+      return signedIn() && exists(/databases/$(database)/documents/members/$(request.auth.uid));
+    }
+
+    // 입장 코드 보관함: 앱에서는 절대 못 읽음
+    match /config/{docId} {
+      allow read, write: if false;
+    }
+
+    // 동아리 명단: 자기 기기 한 줄만, 코드가 맞을 때만 만들 수 있음
+    match /members/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['code', 'joinedAt'])
+        && request.resource.data.code == get(/databases/$(database)/documents/config/club).data.code;
+      allow list, update, delete: if false;
+    }
+
+    // 재고 데이터와 사진
+    match /items/{id}     { allow read, write: if isMember(); }
+    match /loans/{id}     { allow read, write: if isMember(); }
+    match /purchases/{id} { allow read, write: if isMember(); }
+    match /ships/{id}     { allow read, write: if isMember(); }
+    match /photos/{id}    { allow read, create, delete: if isMember(); }
+  }
+}

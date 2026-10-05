@@ -1,0 +1,2098 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="꿀차 EV 자작차 동아리의 부품·공구·소모품 재고와 사용 기록">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231e6b45'/%3E%3Cpath d='M8 12h16v12H8zM11 8h10v4H11z' fill='none' stroke='white' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E">
+<title>GGOOLCHA STORAGE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* 레이아웃: 작업장 공구실 장부. 탭 = 재고 / 구매현황 / 배송현황. 재고 탭은 위 = 지금 사용 중 보드, 소모품 현황표, 아래 = 전체 품목 */
+:root {
+  --bg: #edf0ed;
+  --surface: #fbfcfb;
+  --surface-2: #f1f4f1;
+  --ink: #151a17;
+  --ink-2: #4a5650;
+  --muted: #6e7a74;
+  --line: rgba(21, 26, 23, 0.12);
+  --accent: #1e6b45;
+  --accent-ink: #ffffff;
+  --tag-bg: #f2e6c2;
+  --tag-ink: #5a4917;
+  --warn: #9a4a06;
+  --warn-bg: #fcefd6;
+  --info: #1d5fae;
+  --info-bg: #e2ecfa;
+  --danger: #b42318;
+  --danger-bg: #fde7e4;
+  --shadow: 0 10px 30px rgba(21, 26, 23, 0.16);
+  --font-display: "Do Hyeon", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: var(--font-sans); /* 날짜·시간·장소·숫자도 본문과 같은 글씨체 */
+  --r: 7px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1210; --surface: #161b18; --surface-2: #1c2320;
+    --ink: #e8eee9; --ink-2: #b2bdb6; --muted: #86928b; --line: rgba(255, 255, 255, 0.10);
+    --accent: #3fa673; --accent-ink: #07130c;
+    --tag-bg: #3a321b; --tag-ink: #ecd9a1;
+    --warn: #f1a64c; --warn-bg: #3a2a12; --info: #7cb0f0; --info-bg: #15263c;
+    --danger: #f2786d; --danger-bg: #3d1a17; --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1210; --surface: #161b18; --surface-2: #1c2320;
+  --ink: #e8eee9; --ink-2: #b2bdb6; --muted: #86928b; --line: rgba(255, 255, 255, 0.10);
+  --accent: #3fa673; --accent-ink: #07130c;
+  --tag-bg: #3a321b; --tag-ink: #ecd9a1;
+  --warn: #f1a64c; --warn-bg: #3a2a12; --info: #7cb0f0; --info-bg: #15263c;
+  --danger: #f2786d; --danger-bg: #3d1a17; --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink); margin: 0;
+  font-family: var(--font-sans); font-size: 15px; line-height: 1.55; font-variant-numeric: tabular-nums;
+  padding-inline: 16px; padding-block: 0 56px;
+}
+h1, h2, h3 { margin: 0; line-height: 1.25; text-wrap: balance; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1200px; margin-inline: auto; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* 버튼 */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 13px; border-radius: var(--r); border: 1px solid var(--line);
+  background: var(--surface); cursor: pointer; font-size: 14px; white-space: nowrap;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.ghost { background: transparent; }
+.btn.danger { color: var(--danger); }
+.btn.small { padding: 4px 9px; font-size: 13px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.icon { width: 16px; height: 16px; flex: none; }
+
+/* 상단 */
+.top {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px;
+  padding-block: 22px 16px;
+}
+.title h1 { font-family: var(--font-display); font-weight: 400; font-size: 34px; letter-spacing: 0.04em; }
+.title p { margin: 2px 0 0; color: var(--ink-2); font-size: 14px; }
+.top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.banner {
+  border-radius: var(--r); padding: 10px 14px; font-size: 14px; margin-bottom: 14px;
+  background: var(--info-bg); color: var(--ink);
+}
+.banner.warn { background: var(--warn-bg); }
+
+/* 검색 + 필터 */
+.toolbar {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px;
+}
+@media (max-width: 720px) { .toolbar { grid-template-columns: minmax(0, 1fr); } }
+.search { position: relative; }
+.search input {
+  width: 100%; padding: 9px 12px 9px 36px; border-radius: var(--r); border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 5px 11px;
+  font-size: 13px; cursor: pointer; color: var(--ink-2);
+}
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.chip .n { font-family: var(--font-mono); margin-left: 4px; opacity: 0.75; }
+
+.ai-row {
+  display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap;
+}
+.ai-row input {
+  flex: 1 1 260px; min-width: 0; padding: 9px 12px; border-radius: var(--r);
+  border: 1px dashed var(--accent); background: var(--surface);
+}
+.ai-answer {
+  margin-top: 10px; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: var(--r); padding: 10px 14px; font-size: 14px; display: grid; gap: 6px;
+}
+.ai-answer .head { display: flex; justify-content: space-between; gap: 10px; align-items: center; color: var(--muted); font-size: 12.5px; }
+
+/* 본문 */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; margin-top: 16px; align-items: start; }
+@media (max-width: 980px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+.list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); min-width: 0; }
+.list-head, .row {
+  display: grid; grid-template-columns: 52px minmax(0, 1.6fr) minmax(0, 1fr) 150px 150px;
+  gap: 12px; align-items: center; padding: 10px 14px;
+}
+.list-head {
+  font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line);
+  letter-spacing: 0.04em;
+}
+.row { border-bottom: 1px solid var(--line); }
+.row:last-child { border-bottom: 0; }
+.row.match { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.thumb {
+  width: 52px; height: 52px; border-radius: 6px; background: var(--surface-2); object-fit: cover;
+  display: grid; place-items: center; color: var(--muted); border: 1px solid var(--line); overflow: hidden;
+}
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.name { min-width: 0; }
+.name button {
+  all: unset; cursor: pointer; font-weight: 600; display: block; overflow-wrap: anywhere;
+}
+.name button:hover { text-decoration: underline; }
+.name .spec { color: var(--ink-2); font-size: 13px; overflow-wrap: anywhere; }
+.badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 1px 8px; border-radius: 999px;
+  background: var(--surface-2); color: var(--ink-2);
+}
+.pill.low { background: var(--warn-bg); color: var(--warn); font-weight: 600; }
+.pill.loan { background: var(--info-bg); color: var(--info); font-weight: 600; }
+.pill .icon { width: 12px; height: 12px; }
+.loc {
+  display: inline-block; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0;
+  background: var(--tag-bg); color: var(--tag-ink); padding: 3px 9px 3px 14px; border-radius: 3px 6px 6px 3px;
+  position: relative; max-width: 100%; overflow-wrap: anywhere;
+}
+.loc::before {
+  content: ""; position: absolute; left: 5px; top: 50%; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--surface); transform: translateY(-50%);
+}
+.loc.none { background: var(--surface-2); color: var(--muted); }
+.qty { display: flex; align-items: center; gap: 6px; }
+.qty button {
+  width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-2);
+  cursor: pointer; font-size: 16px; line-height: 1;
+}
+.qty button:hover { border-color: var(--muted); }
+.qty .val { min-width: 54px; text-align: center; }
+.qty .val b { font-family: var(--font-mono); font-size: 16px; font-weight: 500; }
+.qty .val { white-space: nowrap; }
+.qty .val .unit { color: var(--muted); font-size: 12.5px; margin-left: 2px; }
+.qty .val small { display: block; color: var(--muted); font-size: 11.5px; }
+.row-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+.controls { display: contents; }
+
+@media (max-width: 720px) {
+  .list-head { display: none; }
+  .row {
+    grid-template-columns: 52px minmax(0, 1fr); grid-template-areas: "t n" "t l" "c c";
+    row-gap: 8px;
+  }
+  .row .thumb { grid-area: t; align-self: start; }
+  .row .name { grid-area: n; }
+  .row .where { grid-area: l; }
+  .row .controls { grid-area: c; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+}
+
+.empty { padding: 36px 20px; text-align: center; color: var(--ink-2); display: grid; gap: 10px; justify-items: center; }
+.empty strong { color: var(--ink); font-size: 17px; }
+
+/* 오른쪽 */
+.side { display: grid; gap: 14px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.panel h2 { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.panel h2 .count { font-family: var(--font-mono); color: var(--ink); }
+.loan-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding-block: 8px; border-top: 1px solid var(--line); }
+.loan-item:first-of-type { border-top: 0; }
+.loan-item .what { font-weight: 600; overflow-wrap: anywhere; }
+.loan-item .who { color: var(--ink-2); font-size: 13px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.avatar { width: 18px; height: 18px; border-radius: 50%; flex: none; }
+.side .hint, .hint { color: var(--muted); font-size: 12.5px; margin: 0; }
+.buy-list { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 14px; }
+.buy-list span { color: var(--muted); font-family: var(--font-mono); font-size: 12.5px; }
+.stats { display: flex; gap: 14px; flex-wrap: wrap; color: var(--ink-2); font-size: 13.5px; margin-top: 12px; }
+.stats b { font-family: var(--font-mono); color: var(--ink); font-weight: 500; }
+.stats .warn b { color: var(--warn); }
+
+/* 창 */
+dialog {
+  border: 1px solid var(--line); border-radius: 10px; padding: 0; background: var(--surface); color: var(--ink);
+  width: min(560px, calc(100vw - 32px)); box-shadow: var(--shadow); max-height: calc(100vh - 40px);
+}
+dialog::backdrop { background: rgba(10, 14, 12, 0.45); }
+.dlg { display: grid; gap: 14px; padding: 18px; }
+.dlg-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.dlg-head h2 { font-family: var(--font-display); font-weight: 400; font-size: 24px; }
+.form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form .full { grid-column: 1 / -1; }
+@media (max-width: 480px) { .form { grid-template-columns: minmax(0, 1fr); } }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: 12.5px; color: var(--ink-2); }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 8px 10px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface-2);
+}
+.field textarea { min-height: 64px; resize: vertical; }
+.field .req { color: var(--danger); }
+.photo-box { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: center; }
+.photo-box .thumb { width: 96px; height: 96px; }
+.photo-actions { display: grid; gap: 6px; justify-items: start; }
+.dlg-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.dlg-foot .right { display: flex; gap: 8px; margin-left: auto; }
+.confirm { background: var(--danger-bg); border-radius: var(--r); padding: 10px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; }
+.meta { color: var(--muted); font-size: 12.5px; }
+.last { color: var(--ink-2); font-size: 12.5px; margin-top: 3px; overflow-wrap: anywhere; }
+.last b { font-weight: 600; color: var(--ink); }
+.sec-title { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; margin: 4px 0 0; }
+.person-fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+@media (max-width: 480px) { .person-fields { grid-template-columns: minmax(0, 1fr); } }
+.hist { display: grid; gap: 0; }
+.hist-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: start; padding-block: 9px; border-top: 1px solid var(--line); font-size: 13.5px; }
+.hist-item:first-child { border-top: 0; }
+.hist-more { justify-self: stretch; margin-top: 2px; padding: 9px 12px; border: 1px dashed var(--line); border-radius: var(--r); background: transparent; color: var(--ink-2); font: inherit; font-size: 13px; cursor: pointer; }
+.hist-more:hover { background: var(--surface-2); color: var(--ink); }
+.hist-side { display: flex; gap: 6px; align-items: flex-start; }
+.rec-del { all: unset; cursor: pointer; font-size: 12px; color: var(--muted); padding: 3px 7px; border-radius: 6px; border: 1px solid transparent; white-space: nowrap; }
+.rec-del:hover, .rec-del:focus-visible { color: var(--danger); border-color: var(--line); background: var(--surface-2); }
+.rd-box { margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface-2); font-size: 13.5px; }
+.rd-check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; margin-top: 2px; }
+.rd-check input { margin-top: 3px; }
+.hist-item .line { color: var(--ink-2); }
+.hist-item .line b { color: var(--ink); font-weight: 600; }
+.hist-item .count { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+.mini { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; border: 1px solid var(--line); cursor: zoom-in; display: block; }
+.mini-btn { all: unset; cursor: zoom-in; border-radius: 6px; }
+.mini-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#photoDlg img { display: block; width: 100%; max-height: 70vh; object-fit: contain; background: var(--surface-2); border-radius: 6px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--ink); color: var(--surface); padding: 9px 16px; border-radius: 999px; font-size: 14px;
+  box-shadow: var(--shadow); z-index: 10; max-width: calc(100vw - 32px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: up 0.18s ease-out; }
+  @keyframes up { from { transform: translate(-50%, 8px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+}
+
+/* ---- v2 추가 ---- */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.tab {
+  all: unset; cursor: pointer; padding: 9px 14px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent;
+  margin-bottom: -1px; font-size: 15px;
+}
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.toolbar .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.toolbar select { padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); font-size: 13px; }
+.pill.use { background: var(--info-bg); color: var(--info); font-weight: 600; }
+.pill.team { background: transparent; border: 1px solid var(--line); }
+.desc { color: var(--muted); font-size: 12.5px; margin-top: 2px; overflow-wrap: anywhere; }
+.kind { font-size: 11.5px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); margin-right: 4px; }
+.kind.tool { background: var(--info-bg); color: var(--info); }
+.kind.part { background: var(--tag-bg); color: var(--tag-ink); }
+.kind.cons { background: var(--warn-bg); color: var(--warn); }
+.kind.adj { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
+dialog.wide { width: min(980px, calc(100vw - 24px)); }
+.lines { display: grid; gap: 10px; }
+.line-card {
+  border: 1px solid var(--line); border-radius: var(--r); padding: 12px; background: var(--surface-2);
+  display: grid; grid-template-columns: 2fr 1fr 1.2fr 1.2fr 0.8fr 0.8fr 1.3fr; gap: 8px; align-items: end; position: relative;
+}
+.line-card .field input, .line-card .field select { background: var(--surface); }
+.line-card .full2 { grid-column: 1 / -2; }
+.line-card .rm { align-self: end; }
+.line-card .match { grid-column: 1 / -1; font-size: 12.5px; color: var(--accent); margin: -2px 0 0; }
+@media (max-width: 860px) { .line-card { grid-template-columns: 1fr 1fr; } .line-card .full2 { grid-column: 1 / -1; } .line-card .name-f { grid-column: 1 / -1; } }
+.section-box { border: 1px solid var(--line); border-radius: var(--r); padding: 12px; display: grid; gap: 10px; }
+.section-box > h3 { margin: 0; }
+.receipts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.receipts .mini { width: 64px; height: 64px; }
+.purch-head { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; }
+.team-sum { display: flex; gap: 8px; flex-wrap: wrap; }
+.team-sum .chip b { font-family: var(--font-mono); font-weight: 500; margin-left: 6px; color: var(--ink); }
+.team-sum .chip[aria-pressed="true"] b { color: inherit; }
+.purchases { display: grid; gap: 12px; margin-top: 12px; }
+.purchase {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px;
+}
+.purchase .p-top { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+.purchase .p-top strong { font-size: 16px; }
+.purchase .amt { font-family: var(--font-mono); font-size: 16px; }
+.purchase ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; color: var(--ink-2); display: grid; gap: 2px; }
+.purchase .p-side { display: grid; gap: 8px; justify-items: end; align-content: start; }
+@media (max-width: 640px) { .purchase { grid-template-columns: minmax(0, 1fr); } .purchase .p-side { justify-items: start; } }
+.inline-confirm { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+
+@media (max-width: 640px) { #buyHeadForm { grid-template-columns: 1fr 1fr !important; } }
+
+/* ---- v3 추가 ---- */
+.block-title { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 18px 0 8px; }
+.block-title h2 { font-size: 18px; font-weight: 700; }
+.block-title p { margin: 0; color: var(--muted); font-size: 13px; }
+.tbl-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow-x: auto; }
+table.tbl { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 640px; }
+table.tbl th, table.tbl td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.tbl th { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.03em; white-space: nowrap; background: var(--surface-2); }
+table.tbl tr:last-child td { border-bottom: 0; }
+table.tbl td.num, table.tbl th.num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.tbl tfoot td { font-weight: 600; background: var(--surface-2); }
+.bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin-top: 4px; min-width: 60px; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+.bar.low i { background: var(--warn); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.seg button { all: unset; cursor: pointer; padding: 5px 12px; font-size: 13px; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.ship-list { display: grid; gap: 12px; margin-top: 12px; }
+.ship {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px;
+}
+@media (max-width: 640px) { .ship { grid-template-columns: minmax(0, 1fr); } }
+.ship .s-top { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.ship .s-top strong { font-size: 16px; }
+.ship ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; color: var(--ink-2); display: grid; gap: 2px; }
+.ship .s-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--ink-2); font-size: 13px; margin-top: 6px; }
+.ship .s-actions { display: flex; flex-wrap: wrap; gap: 6px; align-content: start; justify-content: flex-end; max-width: 300px; }
+@media (max-width: 640px) { .ship .s-actions { justify-content: flex-start; max-width: none; } }
+.mall { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--line); background: var(--surface-2); }
+.status { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
+.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.status.s0 { background: var(--surface-2); color: var(--ink-2); }
+.status.s1 { background: var(--info-bg); color: var(--info); }
+.status.s2 { background: var(--warn-bg); color: var(--warn); }
+.status.s3 { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.dday { font-family: var(--font-mono); font-size: 12.5px; }
+.dday.late { color: var(--danger); font-weight: 600; }
+a.btn { text-decoration: none; color: inherit; }
+.paste-box { display: grid; gap: 6px; }
+.paste-box textarea { width: 100%; min-height: 80px; padding: 8px 10px; border-radius: var(--r); border: 1px dashed var(--accent); background: var(--surface-2); font-size: 13px; }
+.mini-lines { display: grid; gap: 6px; }
+.mini-line { display: grid; grid-template-columns: minmax(0, 2fr) 70px minmax(0, 1fr) 110px auto; gap: 6px; align-items: center; }
+.mini-line input, .mini-line select { width: 100%; padding: 7px 9px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface-2); }
+@media (max-width: 560px) { .mini-line { grid-template-columns: 1fr 70px; } }
+/* 표 안 글씨체 통일: 날짜·위치·숫자도 본문 글씨체로, 숫자 폭만 맞춘다 */
+table.tbl .mono, table.tbl .loc, table.tbl td.num, table.tbl th.num {
+  font-family: var(--font-sans); letter-spacing: 0; font-variant-numeric: tabular-nums;
+}
+table.tbl .loc { font-size: 13px; padding: 1px 8px 1px 13px; }
+.pill, .status, .kind { white-space: nowrap; }
+.sum-line { text-align: right; font-family: var(--font-mono); color: var(--ink-2); font-size: 13.5px; }
+.line-card { grid-template-columns: 2fr 1fr 1.2fr 1.2fr 0.8fr 0.8fr 1.1fr; }
+.line-card .span2 { grid-column: span 2; }
+.line-card .full { grid-column: 1 / -1; }
+.line-card .rm { grid-column: span 1; }
+@media (max-width: 860px) {
+  .line-card { grid-template-columns: 1fr 1fr; }
+  .line-card .span2, .line-card .name-f { grid-column: 1 / -1; }
+}
+</style>
+<style>
+#ggGate { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(3px); }
+#ggGate .gg-card { width: min(420px, 100%); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 22px; display: grid; gap: 12px; }
+#ggGate h2 { font-family: var(--font-display); font-weight: 400; font-size: 28px; letter-spacing: 0.5px; margin: 0; }
+#ggGate p { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.6; }
+#ggGate form { display: grid; gap: 8px; }
+#ggGate label { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+#ggGate input { font: inherit; padding: 10px 12px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); }
+#ggGate button { font: inherit; font-weight: 600; padding: 10px 14px; border-radius: var(--r); border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+#ggGate button:disabled { opacity: 0.6; cursor: wait; }
+#ggGate .gg-err { min-height: 1.4em; color: var(--danger); font-size: 13px; }
+</style>
+
+<script>
+/* ===== Firebase 설정 (Firebase 콘솔 → 프로젝트 설정 → 내 앱 → SDK 설정 및 구성) ===== */
+window.GGOOLCHA_FIREBASE = {
+  apiKey: "AIzaSyD9rjn6mLzOcieJoGWJ5AEpoY0yh2gPqSM",
+  authDomain: "ggoolcha-storage.firebaseapp.com",
+  projectId: "ggoolcha-storage",
+  storageBucket: "ggoolcha-storage.firebasestorage.app",
+  messagingSenderId: "63468486850",
+  appId: "1:63468486850:web:1579c7e21e2418290cbb5b",
+};
+</script>
+<script>
+/* 화면 코드가 저장소를 기다리는 자리. Firebase 연결부(아래 module)가 준비되면 채워진다. */
+(function () {
+  var done = false, resolve;
+  var boot = new Promise(function (r) { resolve = r; });
+  window.__ggBootResolve = function (api) { if (!done) { done = true; resolve(api); } };
+  // 25초 안에 연결부가 뜨지 않으면(인터넷 끊김 등) 빈 저장소로 시작해서 안내 문구를 띄운다
+  setTimeout(function () { window.__ggBootResolve({}); }, 25000);
+  window.claude = { use: function (name) { return boot.then(function (api) { return (api && api[name]) || null; }); } };
+})();
+</script>
+<script type="module">
+// GGOOLCHA STORAGE 독립 배포용 연결부
+// 화면 코드는 claude.ai용과 똑같이 두고, 그 밑에서 쓰던 저장소(window.claude)를
+// Google Firebase(Firestore 데이터베이스 + 익명 로그인)로 바꿔 끼운다.
+//  - db     → Firestore 컬렉션 items / loans / purchases / ships
+//  - assets → 사진을 줄여서 Firestore photos 컬렉션에 저장 (Storage 유료 요금제 없이)
+//  - user   → 기기별 익명 로그인 id
+//  - sample → 없음 (AI 기능은 이 버전에서 숨김)
+// 처음 들어오는 기기는 '동아리 입장 코드'를 맞혀야 members 명단에 올라가고,
+// 보안 규칙이 명단에 있는 기기만 읽고 쓰게 막는다.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, doc, query, where, orderBy, limit, onSnapshot,
+  getDocs, getDoc, getDocFromCache, addDoc, setDoc, updateDoc, deleteDoc,
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+const PX = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+const photoCache = new Map(), photoWait = new Set();
+let fs = null, uid = null;
+
+// ---------- 오류 코드: Firestore → 화면 코드가 아는 이름 ----------
+function mapErr(e) {
+  const c = String(e?.code || "");
+  const code = c === "permission-denied" ? "invalid_argument"
+    : c === "resource-exhausted" ? "quota_exceeded"
+    : c === "unauthenticated" ? "revoked"
+    : c === "unavailable" ? "unavailable" : c || "upstream_error";
+  return Object.assign(new Error(e?.message || String(e)), { code, cause: e });
+}
+const plain = (o) => JSON.parse(JSON.stringify(o ?? {})); // undefined 값 제거 (Firestore는 거부함)
+const wrapDoc = (d) => ({ id: d.id, exists: d.exists(), data: () => d.data(), metadata: {} });
+const wrapSnap = (s) => {
+  const docs = s.docs.map(wrapDoc);
+  return { docs, size: docs.length, empty: !docs.length, docChanges: () => [], metadata: { fromCache: s.metadata?.fromCache, hasPendingWrites: s.metadata?.hasPendingWrites } };
+};
+
+// ---------- db ----------
+function makeQuery(path, cons = []) {
+  const ref = () => (cons.length ? query(collection(fs, path), ...cons) : collection(fs, path));
+  return {
+    where: (f, op, v) => makeQuery(path, [...cons, where(f, op, v)]),
+    orderBy: (f, dir = "asc") => makeQuery(path, [...cons, orderBy(f, dir)]),
+    limit: (n) => makeQuery(path, [...cons, limit(n)]),
+    async get() { try { return wrapSnap(await getDocs(ref())); } catch (e) { throw mapErr(e); } },
+    onSnapshot(next, error) {
+      return onSnapshot(ref(), (s) => next(wrapSnap(s)), (e) => { if (typeof error === "function") error(mapErr(e)); });
+    },
+  };
+}
+function makeDoc(path) {
+  const r = doc(fs, path);
+  const run = async (p) => { try { return await p; } catch (e) { throw mapErr(e); } };
+  return {
+    id: r.id, path: r.path,
+    get: async () => wrapDoc(await run(getDoc(r))),
+    set: (data) => run(setDoc(r, plain(data))),
+    update: (data) => run(updateDoc(r, plain(data))),
+    delete: () => run(deleteDoc(r)),
+  };
+}
+const db = {
+  doc: makeDoc,
+  collection: (path) => Object.assign(makeQuery(path), {
+    path,
+    doc: (id) => makeDoc(id ? `${path}/${id}` : doc(collection(fs, path)).path),
+    async add(data) { try { return makeDoc((await addDoc(collection(fs, path), plain(data))).path); } catch (e) { throw mapErr(e); } },
+  }),
+};
+
+// ---------- 사진 (Firestore 문서 1개 = 사진 1장, 1MB 한도라 작게 줄여서 저장) ----------
+async function toJpegDataUrl(blob, max, q) {
+  const bmp = await createImageBitmap(blob);
+  const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", q);
+}
+const assets = {
+  async upload(blob) {
+    let url = await toJpegDataUrl(blob, 1280, 0.72);
+    if (url.length > 700000) url = await toJpegDataUrl(blob, 960, 0.6);
+    if (url.length > 900000) throw Object.assign(new Error("too large"), { code: "too_large" });
+    try {
+      const r = await addDoc(collection(fs, "photos"), { data: url, createdAt: Date.now(), by: uid });
+      photoCache.set(r.id, url);
+      return { id: r.id, url, sizeBytes: url.length, contentType: "image/jpeg" };
+    } catch (e) { throw mapErr(e); }
+  },
+  async delete(id) { try { await deleteDoc(doc(fs, "photos", id)); return { deleted: true }; } catch (e) { throw mapErr(e); } },
+  async list() { return { assets: [], usage: { files: 0, bytes: 0, maxFiles: 0, maxBytes: 0 } }; },
+};
+async function loadPhoto(id) {
+  if (photoWait.has(id)) return;
+  photoWait.add(id);
+  await ready;
+  let url = PX;
+  if (fs) {
+    const r = doc(fs, "photos", id);
+    try {
+      let d = null;
+      try { d = await getDocFromCache(r); } catch { d = null; }
+      if (!d || !d.exists()) d = await getDoc(r);
+      if (d.exists()) url = d.data().data || PX;
+    } catch { url = PX; }
+  }
+  photoCache.set(id, url); photoWait.delete(id);
+  const mark = `${PX}#p=${id}`;
+  document.querySelectorAll("img").forEach((img) => { if (img.getAttribute("src") === mark) img.src = url; });
+}
+// 화면 코드의 photoUrl(id)가 부른다: 있으면 바로, 없으면 빈 그림을 두고 불러온 뒤 바꿔 끼움
+window.__ggPhoto = (id) => {
+  if (!id) return "";
+  if (photoCache.has(id)) return photoCache.get(id);
+  loadPhoto(id);
+  return `${PX}#p=${id}`;
+};
+
+const user = {
+  id: async () => uid,
+  can: async () => true,
+  isOwner: async () => false,
+  canEdit: async () => true,
+  profiles: async () => ({}),
+};
+
+// ---------- 입장 화면 ----------
+function overlay(html) {
+  let el = document.getElementById("ggGate");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "ggGate";
+    el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "ggGateTitle");
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<div class="gg-card"><h2 id="ggGateTitle">GGOOLCHA STORAGE</h2>${html}</div>`;
+  return el;
+}
+const closeOverlay = () => document.getElementById("ggGate")?.remove();
+function askCode(msg = "") {
+  return new Promise((resolve) => {
+    const el = overlay(`
+      <p>꿀차 동아리원만 쓸 수 있습니다. 운영진에게 받은 <b>입장 코드</b>를 입력하세요.<br>한 번 들어오면 이 기기에서는 다시 묻지 않습니다.</p>
+      <form id="ggForm" autocomplete="off">
+        <label for="ggCode">입장 코드</label>
+        <input id="ggCode" type="password" maxlength="60" required autofocus>
+        <p class="gg-err" id="ggErr" role="alert">${msg}</p>
+        <button type="submit" id="ggGo">입장</button>
+      </form>`);
+    const form = el.querySelector("#ggForm"), err = el.querySelector("#ggErr"), btn = el.querySelector("#ggGo");
+    setTimeout(() => el.querySelector("#ggCode").focus(), 0);
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const code = el.querySelector("#ggCode").value.trim(); if (!code) return;
+      btn.disabled = true; err.textContent = "확인하는 중…";
+      try {
+        await setDoc(doc(fs, "members", uid), { code, joinedAt: Date.now() });
+        resolve();
+      } catch (e) {
+        err.textContent = e?.code === "permission-denied" ? "입장 코드가 맞지 않습니다." : "인터넷 연결을 확인하고 다시 시도해 주세요.";
+        btn.disabled = false;
+      }
+    });
+  });
+}
+function fatal(msg) { overlay(`<p>${msg}</p><button type="button" onclick="location.reload()">새로고침</button>`); }
+
+let resolveReady;
+const ready = new Promise((r) => (resolveReady = r));
+const NONE = { db: null, user: null, assets: null, sample: null };
+
+async function boot() {
+  const cfg = window.GGOOLCHA_FIREBASE || {};
+  if (!cfg.apiKey || !cfg.projectId) {
+    fatal("아직 Firebase 설정 값이 들어 있지 않습니다.<br>index.html 맨 위의 <b>GGOOLCHA_FIREBASE</b> 칸에 Firebase 웹 앱 설정을 붙여 넣어 주세요.");
+    return NONE;
+  }
+  const app = initializeApp(cfg);
+  const auth = getAuth(app);
+  try { fs = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }
+  catch { fs = initializeFirestore(app, {}); }
+
+  // 이 기기의 익명 로그인 (한 번 만들면 브라우저에 남는다)
+  let u = await new Promise((res) => { const off = onAuthStateChanged(auth, (x) => { off(); res(x); }); });
+  if (!u) {
+    try { u = (await signInAnonymously(auth)).user; }
+    catch (e) {
+      const c = String(e?.code || "");
+      fatal(c.includes("operation-not-allowed") || c.includes("admin-restricted")
+        ? "Firebase에서 <b>익명 로그인</b>이 꺼져 있습니다. Authentication → 로그인 방법에서 ‘익명’을 사용 설정해 주세요."
+        : c.includes("network") ? "인터넷에 연결되어 있지 않습니다. 연결한 뒤 새로고침해 주세요."
+        : `로그인하지 못했습니다. (${c || "알 수 없는 오류"})`);
+      return NONE;
+    }
+  }
+  uid = u.uid;
+
+  // 동아리 명단 확인 (오프라인이면 이 기기에 남긴 표시를 믿는다)
+  const KEY = "gg-member-" + uid;
+  let member = false;
+  try { member = (await getDoc(doc(fs, "members", uid))).exists(); }
+  catch { try { member = localStorage.getItem(KEY) === "1"; } catch {} }
+  if (!member) await askCode();
+  try { localStorage.setItem(KEY, "1"); } catch {}
+  closeOverlay();
+  return { db, user, assets, sample: null };
+}
+
+boot().then(resolveReady, (e) => { fatal(`시작하지 못했습니다. (${e?.code || e?.message || e})`); resolveReady(NONE); });
+// 화면 코드는 window.claude.use(이름)으로 기다리고 있다 (index.html 위쪽의 연결 대기 스크립트)
+ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
+
+</script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zm9 16-4.3-4.3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l2.2 6.3L20 10l-5.8 1.7L12 18l-2.2-6.3L4 10l5.8-1.7z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 1 21h22L12 2zm-1 7h2v6h-2V9zm0 8h2v2h-2v-2z"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M14.5 5.5a4 4 0 0 0 4.9 4.9l-9 9a2 2 0 1 1-2.8-2.8l9-9a4 4 0 0 0-2.1-2.1z"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z"/><path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" d="M9 8h6M9 12h6"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" d="M2 6h12v10H2zM14 9h4l3 3v4h-7z"/><circle cx="6" cy="17.5" r="1.8" fill="var(--surface)" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="17.5" r="1.8" fill="var(--surface)" stroke="currentColor" stroke-width="1.8"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <div class="title">
+      <h1>GGOOLCHA STORAGE</h1>
+      <p>누가 꺼냈고 어디에 두었는지, 꿀차의 부품과 공구를 한곳에서 기록합니다</p>
+    </div>
+    <div class="top-actions">
+      <button class="btn" id="addBtn" type="button"><svg class="icon"><use href="#i-plus"/></svg>품목 1개 등록</button>
+      <button class="btn primary" id="buyBtn" type="button"><svg class="icon"><use href="#i-receipt"/></svg>구매·입고 등록</button>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tabInv" aria-selected="true" aria-controls="viewInv" data-tab="inv">재고</button>
+    <button class="tab" role="tab" id="tabBuy" aria-selected="false" aria-controls="viewBuy" data-tab="buy">구매현황</button>
+    <button class="tab" role="tab" id="tabShip" aria-selected="false" aria-controls="viewShip" data-tab="ship">배송현황</button>
+  </div>
+
+  <!-- ============ 재고 ============ -->
+  <section id="viewInv" role="tabpanel" aria-labelledby="tabInv">
+    <div class="block-title" style="margin-top:4px"><h2>전체 품목</h2><div class="stats" id="stats" style="margin:0"></div></div>
+    <section class="toolbar" aria-label="검색과 필터">
+      <label class="search">
+        <svg class="icon"><use href="#i-search"/></svg>
+        <input id="q" type="search" placeholder="이름, 규격, 위치, 설명으로 찾기 (예: M12, 렌치, 선반)" autocomplete="off">
+      </label>
+      <div class="filters">
+        <div class="chips" id="chips" role="group" aria-label="분류"></div>
+        <select id="teamFilter" aria-label="관리 팀"></select>
+      </div>
+    </section>
+    <form class="ai-row" id="aiForm" hidden>
+      <input id="aiQ" type="text" placeholder="AI에게 묻기 — 예: 토크 렌치 지금 누가 쓰고 있어? 이번 달 와셔 몇 개 썼어?" autocomplete="off">
+      <button class="btn" type="submit" id="aiBtn"><svg class="icon"><use href="#i-spark"/></svg>묻기</button>
+    </form>
+    <div class="ai-answer" id="aiAnswer" hidden>
+      <div class="head"><span>AI 답변 · 목록과 기록을 보고 답합니다</span><button class="btn small ghost" type="button" id="aiClear">닫기</button></div>
+      <div id="aiText"></div>
+    </div>
+
+    <section class="list" aria-label="품목 목록" style="margin-top:14px">
+      <div class="list-head" aria-hidden="true"><span></span><span>품목</span><span>위치</span><span>수량</span><span></span></div>
+      <div id="rows"></div>
+    </section>
+
+    <div class="block-title"><h2>공구 현황</h2><p>사용 시작과 사용 완료를 누르면 일시와 장소가 기록됩니다</p></div>
+    <div class="tbl-wrap"><table class="tbl" id="toolTable"></table></div>
+
+    <div class="block-title"><h2>소모품 현황</h2><p>사용을 기록하면 남은 수량이 바로 줄어들고, 새로 들어오거나 버린 수량은 추가·제거로 바꿉니다</p></div>
+    <div class="tbl-wrap"><table class="tbl" id="consTable"></table></div>
+
+    <div class="block-title"><h2>부품 현황</h2><p>차량에 장착하거나 탈거할 때 일시, 부위, 작업자를 기록합니다</p></div>
+    <div class="tbl-wrap"><table class="tbl" id="partTable"></table></div>
+
+    <div class="block-title"><h2>최근 기록</h2><p>공구 사용, 소모품 사용, 부품 장착·탈거, 수량 추가·제거가 시간순으로 쌓입니다</p></div>
+    <section class="panel"><div id="history"></div></section>
+
+    <div class="block-title"><h2>구매 필요 <span class="count mono" id="buyCount" style="font-size:15px;color:var(--warn)">0</span></h2><p>최소 수량 이하로 떨어진 품목</p></div>
+    <section class="panel">
+      <ol class="buy-list" id="buyNeed"></ol>
+      <p class="hint" id="buyHint">최소 수량을 정해둔 품목이 그 수량 이하로 떨어지면 여기에 모입니다.</p>
+      <div><button class="btn small" type="button" id="copyBuy" hidden>목록 복사</button></div>
+      <textarea id="buyText" class="mono" readonly hidden style="width:100%;min-height:90px;font-size:12.5px"></textarea>
+    </section>
+  </section>
+
+  <!-- ============ 구매현황 ============ -->
+  <section id="viewBuy" role="tabpanel" aria-labelledby="tabBuy" hidden>
+    <div class="purch-head">
+      <div class="team-sum" id="teamSum" role="group" aria-label="팀별 구매 합계"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div class="seg" role="group" aria-label="보기 방식">
+          <button type="button" data-bview="items" aria-pressed="true">품목별 가격</button>
+          <button type="button" data-bview="orders" aria-pressed="false">구매 건별</button>
+        </div>
+        <button class="btn primary" type="button" id="buyBtn2"><svg class="icon"><use href="#i-receipt"/></svg>구매 등록</button>
+      </div>
+    </div>
+    <div id="buyItemsView" style="margin-top:12px"><div class="tbl-wrap"><table class="tbl" id="priceTable"></table></div></div>
+    <div id="buyOrdersView" hidden><div class="purchases" id="purchases"></div></div>
+    <input id="addRecInput" type="file" accept="image/*" multiple hidden>
+  </section>
+
+  <!-- ============ 배송현황 ============ -->
+  <section id="viewShip" role="tabpanel" aria-labelledby="tabShip" hidden>
+    <div class="purch-head">
+      <div class="team-sum" id="shipChips" role="group" aria-label="배송 상태"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select id="mallFilter" aria-label="쇼핑몰" style="padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);font-size:13px"></select>
+        <button class="btn primary" type="button" id="shipAdd"><svg class="icon"><use href="#i-truck"/></svg>배송 등록</button>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:10px">주문번호와 운송장 번호로 추적합니다. ‘배송 조회’를 누르면 택배 조회 화면이, ‘주문 내역’을 누르면 해당 쇼핑몰이 새 탭으로 열립니다. 도착하면 ‘입고 처리’로 재고와 구매현황에 바로 옮길 수 있습니다.</p>
+    <div class="ship-list" id="shipList"></div>
+  </section>
+</div>
+
+<!-- 품목 1개 등록·편집 -->
+<dialog id="itemDlg" aria-labelledby="itemTitle">
+  <form class="dlg" id="itemForm" method="dialog">
+    <div class="dlg-head"><h2 id="itemTitle">품목 등록</h2><button class="btn small ghost" type="button" data-close>닫기</button></div>
+    <div class="photo-box">
+      <div class="thumb" id="fPhotoPrev" aria-hidden="true"><svg class="icon"><use href="#i-camera"/></svg></div>
+      <div class="photo-actions">
+        <label class="btn small" for="fPhoto" id="fPhotoLabel"><svg class="icon"><use href="#i-camera"/></svg>보관 위치 사진</label>
+        <input id="fPhoto" type="file" accept="image/*" capture="environment" hidden>
+        <span class="hint" id="photoHint"></span>
+      </div>
+    </div>
+    <div class="form">
+      <div class="field full"><label for="fName">이름 <span class="req">*</span></label><input id="fName" required maxlength="80" list="nameList" placeholder="예: 노드락 와셔, 토크 렌치"><p class="match" id="fSame" hidden style="margin:2px 0 0;font-size:12.5px;color:var(--accent)"></p></div>
+      <div class="field"><label for="fCat">분류</label><select id="fCat"><option value="부품">부품</option><option value="공구">공구</option><option value="소모품">소모품</option></select></div>
+      <div class="field"><label for="fGroup">세부 분류</label><input id="fGroup" list="groupList" maxlength="30" placeholder="예: 체결류, 전장"></div>
+      <div class="field"><label for="fSpec">규격</label><input id="fSpec" maxlength="80" placeholder="예: M12"></div>
+      <div class="field"><label for="fTeam">관리 팀</label><input id="fTeam" list="teamList" maxlength="30" placeholder="예: 서스펜션"></div>
+      <div class="field"><label for="fQty">수량</label><input id="fQty" type="number" min="0" step="1" value="1" inputmode="numeric"></div>
+      <div class="field"><label for="fUnit">단위</label><select id="fUnit"><option>개</option><option>세트</option><option>m</option><option>롤</option><option>통</option><option>장</option></select></div>
+      <div class="field"><label for="fLoc">보관 위치</label><input id="fLoc" list="locList" maxlength="40" placeholder="예: 선반 위"></div>
+      <div class="field"><label for="fMin">최소 수량</label><input id="fMin" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
+      <div class="field full"><label for="fDesc">설명</label><textarea id="fDesc" maxlength="400" placeholder="예: 모터 너클 풀림방지 체결용"></textarea></div>
+    </div>
+    <p class="meta" id="fMeta"></p>
+    <div id="itemHistBox" hidden><h3 class="sec-title">사용 이력</h3><div class="hist" id="itemHist"></div></div>
+    <div class="confirm" id="delConfirm" hidden>
+      <span>이 품목을 삭제할까요? 사용 기록은 남습니다.</span>
+      <button class="btn small danger" type="button" id="delYes">삭제</button>
+      <button class="btn small" type="button" id="delNo">취소</button>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn danger ghost" type="button" id="delBtn" hidden>삭제</button>
+      <div class="right"><button class="btn" type="button" data-close>취소</button><button class="btn primary" type="submit" id="saveBtn">저장</button></div>
+    </div>
+  </form>
+</dialog>
+
+<!-- 꺼내기 -->
+<dialog id="useDlg" aria-labelledby="useTitle">
+  <form class="dlg" id="useForm" method="dialog">
+    <div class="dlg-head"><h2 id="useTitle">대여</h2><button class="btn small ghost" type="button" data-close>닫기</button></div>
+    <p id="useWhat" style="margin:0"></p>
+    <div class="form">
+      <div class="field"><label for="uQty" id="uQtyLabel">수량</label><input id="uQty" type="number" min="1" step="1" value="1" inputmode="numeric"></div>
+      <div class="field"><label for="uWhen" id="uWhenLabel">사용 일시</label><input id="uWhen" type="datetime-local"></div>
+      <div class="field" id="uSpotField" hidden><label for="uSpot">장착 부위 <span class="req">*</span></label><input id="uSpot" list="spotList" maxlength="40" placeholder="예: 좌측 전륜, 리어 업라이트"></div>
+      <div class="field full"><label for="uNote">용도 (선택)</label><input id="uNote" maxlength="80" placeholder="예: 브레이크 정비"></div>
+    </div>
+    <h3 class="sec-title" id="uWhoTitle">사용자</h3>
+    <div class="person-fields">
+      <div class="field"><label for="uTeam">소속 팀 <span class="req">*</span></label><input id="uTeam" list="teamList" maxlength="30" placeholder="예: 서스펜션"></div>
+      <div class="field"><label for="uRole">직책 <span class="req">*</span></label><input id="uRole" list="roleList" maxlength="20" placeholder="예: 팀원"></div>
+      <div class="field"><label for="uName">이름 <span class="req">*</span></label><input id="uName" maxlength="20" placeholder="예: 홍길동"></div>
+    </div>
+    <h3 class="sec-title">꺼낸 곳</h3>
+    <div class="photo-box">
+      <div class="thumb" id="uPhotoPrev" aria-hidden="true"><svg class="icon"><use href="#i-camera"/></svg></div>
+      <div class="photo-actions">
+        <div class="field" style="width:100%"><label for="uLoc">꺼낸 위치</label><input id="uLoc" list="locList" maxlength="40"></div>
+        <label class="btn small" for="uPhoto" id="uPhotoLabel"><svg class="icon"><use href="#i-camera"/></svg>꺼낸 자리 사진</label>
+        <input id="uPhoto" type="file" accept="image/*" capture="environment" hidden>
+      </div>
+    </div>
+    <div class="dlg-foot"><div class="right"><button class="btn" type="button" data-close>취소</button><button class="btn primary" type="submit" id="useSave">기록</button></div></div>
+  </form>
+</dialog>
+
+<!-- 돌려놓기 -->
+<dialog id="retDlg" aria-labelledby="retTitle">
+  <form class="dlg" id="retForm" method="dialog">
+    <div class="dlg-head"><h2 id="retTitle">반납</h2><button class="btn small ghost" type="button" data-close>닫기</button></div>
+    <div class="field" id="rRecField" hidden><label for="rRec">어느 기록을 마칠까요?</label><select id="rRec"></select></div>
+    <p id="retWhat" style="margin:0"></p>
+    <div class="form">
+      <div class="field"><label for="rWhen" id="rWhenLabel">완료 일시</label><input id="rWhen" type="datetime-local"></div>
+      <div class="field"></div>
+      <div class="field"><label for="rQty" id="rQtyLabel">반납 수량</label><input id="rQty" type="number" min="0" step="1" inputmode="numeric"></div>
+      <div class="field"><label id="rUsedLabel">사용해서 소진</label><p class="mono" id="rUsed" style="margin:6px 0 0">0</p></div>
+    </div>
+    <p class="hint" id="rUsedHint"></p>
+    <h3 class="sec-title" id="rWhoTitle">반납자</h3>
+    <div class="person-fields">
+      <div class="field"><label for="rTeam">소속 팀 <span class="req">*</span></label><input id="rTeam" list="teamList" maxlength="30"></div>
+      <div class="field"><label for="rRole">직책 <span class="req">*</span></label><input id="rRole" list="roleList" maxlength="20"></div>
+      <div class="field"><label for="rName">이름 <span class="req">*</span></label><input id="rName" maxlength="20"></div>
+    </div>
+    <h3 class="sec-title">가져다 둔 곳</h3>
+    <div class="photo-box">
+      <div class="thumb" id="rPhotoPrev" aria-hidden="true"><svg class="icon"><use href="#i-camera"/></svg></div>
+      <div class="photo-actions">
+        <div class="field" style="width:100%"><label for="rLoc">둔 위치 <span class="req">*</span></label><input id="rLoc" list="locList" maxlength="40"></div>
+        <label class="btn small" for="rPhoto" id="rPhotoLabel"><svg class="icon"><use href="#i-camera"/></svg>둔 자리 사진</label>
+        <input id="rPhoto" type="file" accept="image/*" capture="environment" hidden>
+      </div>
+    </div>
+    <p class="hint">원래 자리와 다른 곳에 두었다면 위치를 고쳐 적고 사진을 찍어 주세요. 품목의 현재 위치가 여기로 바뀝니다.</p>
+    <div class="dlg-foot"><div class="right"><button class="btn" type="button" data-close>취소</button><button class="btn primary" type="submit" id="retSave">기록</button></div></div>
+  </form>
+</dialog>
+
+<!-- 구매·입고 -->
+<dialog id="buyDlg" class="wide" aria-labelledby="buyTitle">
+  <form class="dlg" id="buyForm" method="dialog">
+    <div class="dlg-head"><h2 id="buyTitle">구매·입고 등록</h2><button class="btn small ghost" type="button" data-close>닫기</button></div>
+    <div class="section-box">
+      <h3 class="sec-title">구매 정보 <span style="font-weight:400">— 구매 팀을 적으면 구매현황에 영수증과 함께 남습니다</span></h3>
+      <div class="form" style="grid-template-columns:repeat(4,minmax(0,1fr))" id="buyHeadForm">
+        <div class="field"><label for="bTeam">구매 팀</label><input id="bTeam" list="teamList" maxlength="30" placeholder="예: 서스펜션"></div>
+        <div class="field"><label for="bDate">구매일</label><input id="bDate" type="date"></div>
+        <div class="field"><label for="bVendor">구매처</label><input id="bVendor" list="mallList" maxlength="40" placeholder="예: 한국미스미, 쿠팡"></div>
+        <div class="field"><label for="bAmount">총 금액 (원)</label><input id="bAmount" type="number" min="0" step="1" inputmode="numeric" placeholder="비우면 품목 금액 합계"></div>
+        <div class="field" style="grid-column:1/-1"><label for="bMemo">메모</label><input id="bMemo" maxlength="120" placeholder="예: 2차 정비용 체결류"></div>
+      </div>
+      <div class="receipts" id="bReceipts"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <label class="btn small" for="bReceipt" id="bReceiptLabel"><svg class="icon"><use href="#i-receipt"/></svg>영수증 사진 추가</label>
+        <input id="bReceipt" type="file" accept="image/*" multiple hidden>
+        <label class="btn small" for="bLocPhoto" id="bLocPhotoLabel"><svg class="icon"><use href="#i-camera"/></svg>보관 위치 사진 (새 품목 공통)</label>
+        <input id="bLocPhoto" type="file" accept="image/*" capture="environment" hidden>
+        <span class="hint" id="bLocPhotoHint" style="align-self:center"></span>
+      </div>
+    </div>
+    <h3 class="sec-title">품목 <span style="font-weight:400">— 이미 등록된 품목과 이름·규격이 같으면 수량만 더해집니다</span></h3>
+    <div class="lines" id="bLines"></div>
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn small" type="button" id="bAddLine"><svg class="icon"><use href="#i-plus"/></svg>줄 추가</button>
+      <span class="sum-line" id="bSum"></span>
+    </div>
+    <h3 class="sec-title">등록자</h3>
+    <div class="person-fields">
+      <div class="field"><label for="bwTeam">소속 팀</label><input id="bwTeam" list="teamList" maxlength="30"></div>
+      <div class="field"><label for="bwRole">직책</label><input id="bwRole" list="roleList" maxlength="20"></div>
+      <div class="field"><label for="bwName">이름</label><input id="bwName" maxlength="20"></div>
+    </div>
+    <div class="dlg-foot"><div class="right"><button class="btn" type="button" data-close>취소</button><button class="btn primary" type="submit" id="bSave">등록</button></div></div>
+  </form>
+</dialog>
+
+<!-- 배송 등록·편집 -->
+<dialog id="shipDlg" class="wide" aria-labelledby="shipTitle">
+  <form class="dlg" id="shipForm" method="dialog">
+    <div class="dlg-head"><h2 id="shipTitle">배송 등록</h2><button class="btn small ghost" type="button" data-close>닫기</button></div>
+    <div class="paste-box" id="pasteBox" hidden>
+      <label for="sPaste" class="sec-title" style="margin:0">주문·배송 안내 붙여넣기 <span style="font-weight:400">— 쇼핑몰 주문 완료 화면이나 배송 알림 문구를 복사해 넣으면 AI가 아래 칸을 채워줍니다</span></label>
+      <textarea id="sPaste" placeholder="예: [쿠팡] 주문하신 상품이 출발했습니다. 상품명: 육각 렌치 세트 1개, 송장번호 CJ대한통운 123456789012 …"></textarea>
+      <div><button class="btn small" type="button" id="sAi"><svg class="icon"><use href="#i-spark"/></svg>AI로 채우기</button> <span class="hint" id="sAiNote"></span></div>
+    </div>
+    <div class="form" style="grid-template-columns:repeat(4,minmax(0,1fr))" id="shipHeadForm">
+      <div class="field"><label for="sMall">쇼핑몰 <span class="req">*</span></label><select id="sMall"><option>한국미스미</option><option>알리익스프레스</option><option>쿠팡</option><option>기타</option></select></div>
+      <div class="field"><label for="sOrder">주문번호</label><input id="sOrder" maxlength="40"></div>
+      <div class="field"><label for="sTeam">주문 팀</label><input id="sTeam" list="teamList" maxlength="30"></div>
+      <div class="field"><label for="sStatus">상태</label><select id="sStatus"><option>주문완료</option><option>배송중</option><option>도착</option><option>입고완료</option></select></div>
+      <div class="field"><label for="sOrdered">주문일</label><input id="sOrdered" type="date"></div>
+      <div class="field"><label for="sEta">도착 예정일</label><input id="sEta" type="date"></div>
+      <div class="field"><label for="sCourier">택배사</label><input id="sCourier" list="courierList" maxlength="30" placeholder="예: CJ대한통운"></div>
+      <div class="field"><label for="sTrack">운송장 번호</label><input id="sTrack" maxlength="40" inputmode="numeric"></div>
+      <div class="field" style="grid-column:1/-1"><label for="sMemo">메모</label><input id="sMemo" maxlength="120" placeholder="예: 서스펜션 하단 브라켓 볼트, 주말 도착 시 동아리방 앞"></div>
+    </div>
+    <h3 class="sec-title">주문한 품목</h3>
+    <div class="mini-lines" id="sLines"></div>
+    <div><button class="btn small" type="button" id="sAddLine"><svg class="icon"><use href="#i-plus"/></svg>줄 추가</button></div>
+    <div class="confirm" id="sDelConfirm" hidden>
+      <span>이 배송 기록을 지울까요?</span>
+      <button class="btn small danger" type="button" id="sDelYes">삭제</button>
+      <button class="btn small" type="button" id="sDelNo">취소</button>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn danger ghost" type="button" id="sDelBtn" hidden>삭제</button>
+      <div class="right"><button class="btn" type="button" data-close>취소</button><button class="btn primary" type="submit" id="sSave">저장</button></div>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="adjDlg" aria-labelledby="adjTitle">
+  <form class="dlg" id="adjForm" method="dialog">
+    <div class="dlg-head"><h2 id="adjTitle">수량 추가</h2><button class="btn small ghost" type="button" data-close>닫기</button></div>
+    <p id="adjWhat" style="margin:0"></p>
+    <div class="form">
+      <div class="field"><label for="aQty" id="aQtyLabel">추가할 수량</label><input id="aQty" type="number" min="1" step="1" value="1" inputmode="numeric"></div>
+      <div class="field"><label>바뀐 뒤 총 수량</label><p id="aAfter" style="margin:6px 0 0;font-weight:600">0</p></div>
+      <div class="field full"><label for="aWhy">사유 (선택)</label><input id="aWhy" maxlength="80" placeholder="예: 예비 타이어 입고, 마모로 폐기"></div>
+    </div>
+    <h3 class="sec-title">기록자</h3>
+    <div class="person-fields">
+      <div class="field"><label for="aTeam">소속 팀 <span class="req">*</span></label><input id="aTeam" list="teamList" maxlength="30"></div>
+      <div class="field"><label for="aRole">직책 <span class="req">*</span></label><input id="aRole" list="roleList" maxlength="20"></div>
+      <div class="field"><label for="aName">이름 <span class="req">*</span></label><input id="aName" maxlength="20"></div>
+    </div>
+    <div class="dlg-foot"><div class="right"><button class="btn" type="button" data-close>취소</button><button class="btn primary" type="submit" id="aSave">저장</button></div></div>
+  </form>
+</dialog>
+
+<dialog id="recDelDlg" aria-labelledby="rdTitle">
+  <form class="dlg" id="recDelForm" method="dialog">
+    <div class="dlg-head"><h2 id="rdTitle">기록 삭제</h2><button class="btn small ghost" type="button" data-close>닫기</button></div>
+    <p style="margin:0">잘못 입력한 기록이면 지울 수 있습니다. 지운 기록은 되살릴 수 없습니다.</p>
+    <div class="rd-box" id="rdWhat"></div>
+    <label class="rd-check" id="rdRevertRow"><input type="checkbox" id="rdRevert" checked><span id="rdRevertLabel"></span></label>
+    <p class="hint" id="rdNote" style="margin:0"></p>
+    <div class="dlg-foot"><div class="right"><button class="btn" type="button" data-close>취소</button><button class="btn primary" type="submit" id="rdYes" style="background:var(--danger);border-color:var(--danger)">기록 삭제</button></div></div>
+  </form>
+</dialog>
+
+<dialog id="photoDlg" aria-label="사진 크게 보기">
+  <div class="dlg">
+    <div class="dlg-head"><h2 id="photoTitle" style="font-size:20px">사진</h2><button class="btn small ghost" type="button" data-close>닫기</button></div>
+    <img id="photoBig" alt="">
+  </div>
+</dialog>
+
+<datalist id="locList"></datalist>
+<datalist id="teamList"></datalist>
+<datalist id="groupList"></datalist>
+<datalist id="nameList"></datalist>
+<datalist id="spotList"><option value="좌측 전륜"><option value="우측 전륜"><option value="좌측 후륜"><option value="우측 후륜"><option value="프론트 서스펜션"><option value="리어 서스펜션"><option value="조향 장치"><option value="제동 장치"><option value="프레임"><option value="배터리팩"><option value="모터"></datalist>
+<datalist id="roleList"><option value="팀장"><option value="부팀장"><option value="팀원"><option value="회장"><option value="총무"></datalist>
+<datalist id="mallList"><option value="한국미스미"><option value="알리익스프레스"><option value="쿠팡"></datalist>
+<datalist id="courierList"><option value="CJ대한통운"><option value="한진택배"><option value="롯데택배"><option value="우체국택배"><option value="로젠택배"><option value="쿠팡 로켓배송"><option value="해외 배송"></datalist>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const use = (n) => (window.claude && typeof window.claude.use === "function" ? window.claude.use(n) : Promise.resolve(null));
+  const CATS = ["부품", "공구", "소모품"];
+  const KIND = {
+    부품: { start: "장착", open: "장착됨", end: "탈거", endDone: "탈거", who: "장착한 사람", backWho: "탈거한 사람", lost: "폐기(손상)", lostHint: "장착한 수량보다 적게 보관하면 그 차이는 손상으로 폐기된 것으로 기록되고 재고에서 빠집니다.", cls: "part" },
+    공구: { start: "사용 시작", open: "사용 중", end: "사용 완료", endDone: "사용 완료", who: "사용자", backWho: "가져다 둔 사람", lost: "분실·파손", lostHint: "꺼낸 수량보다 적게 돌려놓으면 그 차이는 분실·파손으로 기록되고 재고에서 빠집니다.", cls: "tool" },
+    소모품: { start: "사용", open: "", end: "", endDone: "", who: "사용자", backWho: "", lost: "", lostHint: "", cls: "cons" },
+  };
+  const kindOf = (rec) => rec.kind || "부품";
+  const STATUSES = ["주문완료", "배송중", "도착", "입고완료"];
+  const MALLS = ["한국미스미", "알리익스프레스", "쿠팡", "기타"];
+  const MALL_ORDER_URL = {
+    한국미스미: "https://kr.misumi-ec.com/",
+    알리익스프레스: "https://www.aliexpress.com/p/order/index.html",
+    쿠팡: "https://mc.coupang.com/ssr/desktop/order/list",
+  };
+  const DAY = 86400000;
+
+  const S = {
+    items: [], openRecs: [], recent: [], consRecs: [], toolRecs: [], partRecs: [], purchases: [], ships: [],
+    loaded: { items: false },
+    q: "", cat: "all", team: "", onlyLow: false, onlyOpen: false, aiMatch: null,
+    buyTeam: "", buyView: "items", shipStatus: "", shipMall: "",
+    canWrite: true, me: null, mergeAsk: null, adj: null,
+    editing: null, photoFile: null, useItem: null, usePhoto: null, retRec: null, retPhoto: null,
+    bReceipts: [], bLocPhoto: null, bFromShip: null, delPurchase: null, shipEditing: null, addRecFor: null,
+  };
+  let db = null, user = null, assets = null, sample = null;
+  const pendingQty = new Map();
+
+  // ---------- 공통 ----------
+  let toastTimer = null;
+  function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 2800); }
+  function banner(msg, warn) { const b = $("#banner"); b.hidden = !msg; b.textContent = msg || ""; b.classList.toggle("warn", !!warn); }
+  function ago(ms) {
+    if (!ms) return "";
+    const s = (Date.now() - ms) / 1000;
+    if (s < 60) return "방금"; if (s < 3600) return `${Math.floor(s / 60)}분 전`;
+    if (s < 86400) return `${Math.floor(s / 3600)}시간 전`; if (s < 86400 * 30) return `${Math.floor(s / 86400)}일 전`;
+    const d = new Date(ms); return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+  }
+  const localIso = (ms) => new Date(ms - new Date(ms).getTimezoneOffset() * 60000).toISOString();
+  const today = () => localIso(Date.now()).slice(0, 10);
+  const nowLocal = () => localIso(Date.now()).slice(0, 16);
+  const WD = ["일", "월", "화", "수", "목", "금", "토"];
+  function fmtDT(ms, withTime = true) {
+    if (!ms) return "";
+    const d = new Date(ms), y = d.getFullYear() !== new Date().getFullYear() ? `${d.getFullYear()}.` : "";
+    const t = `${y}${d.getMonth() + 1}.${d.getDate()}(${WD[d.getDay()]})`;
+    return withTime ? `${t} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}` : t;
+  }
+  // 입력칸 값 → 시각(ms). 날짜만 있으면 오늘은 지금, 다른 날은 정오로 본다
+  function readWhen(v) {
+    if (!v) return Date.now();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v === today() ? Date.now() : new Date(v + "T12:00").getTime();
+    const t = new Date(v).getTime();
+    return Number.isFinite(t) ? t : Date.now();
+  }
+  const won = (n) => (Number(n) || 0).toLocaleString("ko-KR") + "원";
+  function writeFailed(e, what) {
+    if (e && e.code === "invalid_argument") { S.canWrite = false; banner("이 페이지에서 수정할 권한이 없습니다. 목록은 볼 수 있습니다.", true); render(); }
+    else if (e && e.code === "quota_exceeded") toast("저장 공간이 가득 찼습니다. 쓰지 않는 기록을 정리해 주세요.");
+    else toast(`${what}에 실패했습니다. 잠시 후 다시 시도해 주세요.`);
+  }
+  const qtyOf = (it) => (pendingQty.has(it.id) ? pendingQty.get(it.id).qty : Number(it.qty) || 0);
+  const outOf = (id) => S.openRecs.filter((l) => l.itemId === id).reduce((a, l) => a + (Number(l.qty) || 0), 0);
+  const isLow = (it) => Number(it.minQty) > 0 && qtyOf(it) <= Number(it.minQty);
+  const photoUrl = (id) => (id ? (window.__ggPhoto ? window.__ggPhoto(id) : "") : "");
+  const descOf = (it) => it.description ?? it.note ?? "";
+  const person = (t, r, n) => [t, r, n].map((v) => String(v || "").trim()).filter(Boolean).join(" ");
+  const mini = (id, title) => id ? `<button type="button" class="mini-btn" data-photo="${esc(id)}" data-title="${esc(title || "사진")}"><img class="mini" src="${esc(photoUrl(id))}" alt="${esc(title || "사진")}" loading="lazy"></button>` : "";
+  function savedMe() { try { return JSON.parse(localStorage.getItem("inv-me") || "{}"); } catch { return {}; } }
+  function rememberMe(team, role, name) { try { localStorage.setItem("inv-me", JSON.stringify({ team, role, name })); } catch {} }
+  function fillPerson(p) { const me = savedMe(); $(`#${p}Team`).value = me.team || ""; $(`#${p}Role`).value = me.role || ""; $(`#${p}Name`).value = me.name || ""; }
+  function readPerson(p, required = true) {
+    const t = $(`#${p}Team`).value.trim(), r = $(`#${p}Role`).value.trim(), n = $(`#${p}Name`).value.trim();
+    if (required && (!t || !r || !n)) { toast("소속 팀, 직책, 이름을 모두 적어 주세요."); $(`#${p}${!t ? "Team" : !r ? "Role" : "Name"}`).focus(); return null; }
+    if (t && r && n) rememberMe(t, r, n);
+    return { t, r, n };
+  }
+  async function shrinkImage(file, max = 1600) {
+    const bmp = await createImageBitmap(file);
+    const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    return await new Promise((r) => c.toBlob(r, "image/jpeg", 0.82));
+  }
+  async function uploadPhoto(file) {
+    if (!file || !assets) return null;
+    try { return (await assets.upload(await shrinkImage(file), { type: "image/jpeg" })).id; }
+    catch (e) { toast(e?.code === "too_large" ? "사진이 너무 큽니다." : "사진을 올리지 못했습니다. 사진 없이 기록합니다."); return null; }
+  }
+  const setPrev = (sel, src, alt) => ($(sel).innerHTML = src ? `<img src="${esc(src)}" alt="${esc(alt || "사진")}">` : `<svg class="icon"><use href="#i-camera"/></svg>`);
+  const TEAMS = ["서스펜션", "제동", "조향", "프레임", "모터/통신", "배터리"];
+  const teams = () => { const extra = [...new Set([...S.items.map((i) => i.team), ...S.purchases.map((p) => p.team), ...S.ships.map((s) => s.team)].filter((t) => t && !TEAMS.includes(t)))].sort((a, b) => a.localeCompare(b, "ko")); return [...TEAMS, ...extra]; };
+
+  // ================= 재고 =================
+  function filtered() {
+    const q = S.q.trim().toLowerCase();
+    return S.items
+      .filter((it) => S.cat === "all" || it.category === S.cat)
+      .filter((it) => !S.team || it.team === S.team)
+      .filter((it) => !S.onlyLow || isLow(it))
+      .filter((it) => !S.onlyOpen || outOf(it.id) > 0)
+      .filter((it) => !S.aiMatch || S.aiMatch.has(it.id))
+      .filter((it) => !q || [it.name, it.spec, it.location, descOf(it), it.category, it.group, it.team].some((v) => String(v || "").toLowerCase().includes(q)))
+      .sort((a, b) => (isLow(b) - isLow(a)) || String(a.name).localeCompare(String(b.name), "ko"));
+  }
+
+  function renderChips() {
+    const n = (c) => S.items.filter((it) => c === "all" || it.category === c).length;
+    $("#chips").innerHTML =
+      ["all", ...CATS].map((c) => `<button type="button" class="chip" data-cat="${c}" aria-pressed="${S.cat === c}">${c === "all" ? "전체" : c}<span class="n">${n(c)}</span></button>`).join("") +
+      "";
+    const ts = teams();
+    $("#teamFilter").innerHTML = `<option value="">모든 팀</option>` + ts.map((t) => `<option value="${esc(t)}" ${S.team === t ? "selected" : ""}>${esc(t)}</option>`).join("");
+  }
+
+  function renderStats() {
+    const tools = S.openRecs.filter((l) => kindOf(l) === "공구").reduce((a, l) => a + (Number(l.qty) || 0), 0);
+    const parts = S.openRecs.filter((l) => kindOf(l) === "부품").reduce((a, l) => a + (Number(l.qty) || 0), 0);
+    const shipping = S.ships.filter((s) => s.status === "배송중" || s.status === "주문완료").length;
+    $("#stats").innerHTML = S.loaded.items
+      ? `<span>품목 <b>${S.items.length}</b></span><span class="${S.items.some(isLow) ? "warn" : ""}">부족 <b>${S.items.filter(isLow).length}</b></span><span>공구 사용 중 <b>${tools}</b></span><span>부품 장착 중 <b>${parts}</b></span><span>배송 대기 <b>${shipping}</b></span>`
+      : "";
+  }
+
+  function renderTools() {
+    const tools = S.items.filter((it) => it.category === "공구").sort((a, b) => (outOf(b.id) > 0) - (outOf(a.id) > 0) || String(a.name).localeCompare(String(b.name), "ko"));
+    if (!tools.length) { $("#toolTable").innerHTML = `<tbody><tr><td class="hint">등록된 공구가 없습니다. 품목을 등록할 때 분류를 ‘공구’로 고르면 여기에 나타납니다.</td></tr></tbody>`; return; }
+    const lastDone = (id) => S.toolRecs.filter((r) => r.itemId === id && !r.open).sort((a, b) => (b.returnedAt || 0) - (a.returnedAt || 0))[0];
+    $("#toolTable").innerHTML = `<thead><tr><th>공구</th><th>현재 상황</th><th>사용 시작</th><th>사용 완료</th><th></th></tr></thead><tbody>` +
+      tools.map((it) => {
+        const open = S.openRecs.filter((r) => r.itemId === it.id).sort((a, b) => (b.borrowedAt || 0) - (a.borrowedAt || 0));
+        const done = lastDone(it.id);
+        const cur = open[0] || done;
+        const avail = Math.max(qtyOf(it) - outOf(it.id), 0);
+        const state = open.length
+          ? `<span class="pill use">사용 중${open.length > 1 ? ` ${open.length}건` : ""}</span>`
+          : done ? `<span class="pill" style="background:color-mix(in srgb, var(--accent) 14%, transparent);color:var(--accent);font-weight:600">사용 완료</span>` : `<span class="pill">보관 중</span>`;
+        const startCell = cur ? `<span class="mono">${fmtDT(cur.borrowedAt)}</span><div class="desc">${esc(person(cur.team, cur.role, cur.name))}${cur.fromLocation ? ` · ${esc(cur.fromLocation)}에서` : ""}</div>` : `<span class="hint">기록 없음</span>`;
+        const endCell = open.length
+          ? `<span class="hint">아직 사용 중</span>`
+          : done ? `<span class="loc">${esc(done.retLocation || "-")}</span> <span class="mono">${fmtDT(done.returnedAt)}</span><div class="desc">${esc(person(done.retTeam, done.retRole, done.retName))}${Number(done.consumedQty) ? ` · 분실·파손 ${esc(done.consumedQty)}개` : ""}</div>` : `<span class="hint">–</span>`;
+        const pics = cur ? `${mini(cur.pickPhoto, `${it.name} 꺼낸 자리`)}${!open.length ? mini(cur.retPhoto, `${it.name} 둔 자리`) : ""}` : "";
+        return `<tr>
+          <td><b>${esc(it.name)}</b>${it.spec ? ` <span class="desc" style="display:inline">${esc(it.spec)}</span>` : ""}<div class="desc">보관: ${esc(it.location || "위치 미정")} · ${avail}/${qtyOf(it)}${esc(it.unit || "개")} 남음</div></td>
+          <td>${state}</td><td>${startCell}</td><td>${endCell}</td>
+          <td><div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;flex-wrap:wrap">${pics}
+            ${S.canWrite && open.length ? `<button class="btn small" type="button" data-tdone="${esc(it.id)}">사용 완료</button>` : ""}
+            ${S.canWrite && avail > 0 ? `<button class="btn small${open.length ? " ghost" : ""}" type="button" data-tstart="${esc(it.id)}">사용 시작</button>` : ""}</div></td>
+        </tr>`;
+      }).join("") + "</tbody>";
+  }
+
+  function renderParts() {
+    const parts = S.items.filter((it) => (it.category || "부품") === "부품").sort((a, b) => (outOf(b.id) > 0) - (outOf(a.id) > 0) || String(a.name).localeCompare(String(b.name), "ko"));
+    if (!parts.length) { $("#partTable").innerHTML = `<tbody><tr><td class="hint">등록된 부품이 없습니다. 품목을 등록할 때 분류를 ‘부품’으로 고르면 여기에 나타납니다.</td></tr></tbody>`; return; }
+    $("#partTable").innerHTML = `<thead><tr><th>부품</th><th>상태</th><th class="num">장착 / 보관</th><th>장착 내역</th><th>최근 탈거</th><th></th></tr></thead><tbody>` +
+      parts.map((it) => {
+        const on = S.openRecs.filter((r) => r.itemId === it.id).sort((a, b) => (b.borrowedAt || 0) - (a.borrowedAt || 0));
+        const onQty = on.reduce((a, r) => a + (Number(r.qty) || 0), 0), stored = Math.max(qtyOf(it) - onQty, 0);
+        const off = S.partRecs.filter((r) => r.itemId === it.id && !r.open).sort((a, b) => (b.returnedAt || 0) - (a.returnedAt || 0))[0];
+        const state = onQty ? `<span class="pill" style="background:var(--tag-bg);color:var(--tag-ink);font-weight:600">장착 ${onQty}${esc(it.unit || "개")}</span>${stored ? ` <span class="pill">미장착 ${stored}</span>` : ""}` : `<span class="pill">미장착</span>`;
+        const onCell = on.length ? on.slice(0, 4).map((r) => `<div><b>${esc(r.spot || "부위 미기재")}</b> ${esc(r.qty)}개 · <span class="mono">${fmtDT(r.borrowedAt)}</span><div class="desc">${esc(person(r.team, r.role, r.name))}</div></div>`).join("") + (on.length > 4 ? `<div class="hint">외 ${on.length - 4}건</div>` : "") : `<span class="hint">–</span>`;
+        const offCell = off ? `<b>${esc(off.spot || "")}</b>${off.spot ? " → " : ""}<span class="loc">${esc(off.retLocation || "-")}</span> <span class="mono">${fmtDT(off.returnedAt)}</span><div class="desc">${esc(person(off.retTeam, off.retRole, off.retName))}${Number(off.consumedQty) ? ` · 폐기 ${esc(off.consumedQty)}개` : ""}</div>` : `<span class="hint">–</span>`;
+        return `<tr>
+          <td><b>${esc(it.name)}</b>${it.spec ? ` <span class="desc" style="display:inline">${esc(it.spec)}</span>` : ""}<div class="desc">보관: ${esc(it.location || "위치 미정")}${it.team ? ` · ${esc(it.team)}` : ""}</div>${mergeNote(it)}</td>
+          <td>${state}</td>
+          <td class="num">${onQty} / ${stored}</td>
+          <td>${onCell}</td><td>${offCell}</td>
+          <td><div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">
+            ${S.canWrite && onQty ? `<button class="btn small" type="button" data-poff="${esc(it.id)}">탈거</button>` : ""}
+            ${S.canWrite && stored > 0 ? `<button class="btn small${onQty ? " ghost" : ""}" type="button" data-pon="${esc(it.id)}">장착</button>` : ""}
+            ${S.canWrite ? `<button class="btn small ghost" type="button" data-padd="${esc(it.id)}" aria-label="${esc(it.name)} 수량 추가">추가</button><button class="btn small ghost" type="button" data-psub="${esc(it.id)}" aria-label="${esc(it.name)} 수량 제거" ${stored <= 0 ? "disabled" : ""}>제거</button>` : ""}</div></td>
+        </tr>`;
+      }).join("") + "</tbody>";
+  }
+
+  function renderConsumables() {
+    const cons = S.items.filter((it) => it.category === "소모품").sort((a, b) => (isLow(b) - isLow(a)) || String(a.name).localeCompare(String(b.name), "ko"));
+    if (!cons.length) { $("#consTable").innerHTML = `<tbody><tr><td class="hint">등록된 소모품이 없습니다. 품목을 등록할 때 분류를 ‘소모품’으로 고르면 여기에 나타납니다.</td></tr></tbody>`; return; }
+    $("#consTable").innerHTML = `<thead><tr><th>소모품</th><th class="num">남은 수량</th><th>최근 사용</th><th></th></tr></thead><tbody>` +
+      cons.map((it) => {
+        const left = qtyOf(it);
+        const recs = S.consRecs.filter((r) => r.itemId === it.id).sort((a, b) => (b.borrowedAt || 0) - (a.borrowedAt || 0));
+        const base = Math.max(left + recs.reduce((a, r) => a + (Number(r.qty) || 0), 0), Number(it.minQty) || 0, 1);
+        const last = recs[0];
+        return `<tr>
+          <td><b>${esc(it.name)}</b>${it.spec ? ` <span class="desc" style="display:inline">${esc(it.spec)}</span>` : ""}${it.location ? `<div class="desc">${esc(it.location)}</div>` : ""}</td>
+          <td class="num"><b>${left}</b>${esc(it.unit || "개")}${isLow(it) ? ` <span class="pill low" style="font-family:var(--font-sans)">부족</span>` : ""}<div class="bar${isLow(it) ? " low" : ""}" aria-hidden="true"><i style="width:${Math.min(100, (left / base) * 100)}%"></i></div></td>
+          <td>${last ? `<span class="mono">${fmtDT(last.borrowedAt, false)}</span> · ${esc(person(last.team, last.role, last.name))} <b>${esc(last.qty)}${esc(it.unit || "개")}</b> 사용${recs.length > 1 ? `<div class="desc">이전: ${recs.slice(1, 3).map((r) => `${fmtDT(r.borrowedAt, false)} ${esc(r.name || "")} ${esc(r.qty)}개`).join(", ")}</div>` : ""}` : `<span class="hint">기록 없음</span>`}</td>
+          <td><div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">${S.canWrite ? `<button class="btn small" type="button" data-consuse="${esc(it.id)}" ${left <= 0 ? "disabled" : ""}>사용</button><button class="btn small ghost" type="button" data-cadd="${esc(it.id)}" aria-label="${esc(it.name)} 수량 추가">추가</button><button class="btn small ghost" type="button" data-csub="${esc(it.id)}" aria-label="${esc(it.name)} 수량 제거" ${left <= 0 ? "disabled" : ""}>제거</button>` : ""}</div></td>
+        </tr>`;
+      }).join("") + "</tbody>";
+  }
+
+  function rowHtml(it) {
+    const qty = qtyOf(it), out = outOf(it.id), low = isLow(it), cat = it.category || "부품", K = KIND[cat] || KIND.부품;
+    const pills = [`<span class="pill">${esc(cat)}${it.group ? ` · ${esc(it.group)}` : ""}</span>`];
+    if (it.team) pills.push(`<span class="pill team">${esc(it.team)}</span>`);
+    if (low) pills.push(`<span class="pill low"><svg class="icon"><use href="#i-warn"/></svg>부족 · 최소 ${esc(it.minQty)}</span>`);
+    if (out) pills.push(`<span class="pill ${cat === "공구" ? "use" : "loan"}"><svg class="icon"><use href="#i-out"/></svg>${K.open} ${out}</span>`);
+    const w = S.canWrite, avail = Math.max(qty - out, 0);
+    return `<div class="row${S.aiMatch && S.aiMatch.has(it.id) ? " match" : ""}" data-id="${esc(it.id)}">
+      <div class="thumb">${it.photo ? `<button type="button" class="mini-btn" data-photo="${esc(it.photo)}" data-title="${esc(it.name)} 보관 위치"><img src="${esc(photoUrl(it.photo))}" alt="${esc(it.name)} 보관 위치" loading="lazy" style="width:52px;height:52px;object-fit:cover;display:block"></button>` : `<svg class="icon"><use href="#i-tool"/></svg>`}</div>
+      <div class="name"><button type="button" data-act="open">${esc(it.name)}</button>
+        ${it.spec ? `<div class="spec">${esc(it.spec)}</div>` : ""}
+        ${descOf(it) ? `<div class="desc">${esc(descOf(it))}</div>` : ""}
+        <div class="badges">${pills.join("")}</div>
+        ${mergeNote(it)}
+        ${it.lastUse ? `<div class="last">최근 ${esc(it.lastUse.action)}: <b>${esc(it.lastUse.who)}</b>${it.lastUse.qty != null ? ` ${esc(it.lastUse.qty)}${esc(it.unit || "개")}` : ""} · ${ago(it.lastUse.at)}</div>` : ""}</div>
+      <div class="where">${it.location ? `<span class="loc">${esc(it.location)}</span>` : `<span class="loc none">위치 미정</span>`}</div>
+      <div class="controls"><div class="qty">
+        ${w ? `<button type="button" data-act="dec" aria-label="${esc(it.name)} 1개 빼기">−</button>` : ""}
+        <div class="val"><b>${qty}</b><span class="unit">${esc(it.unit || "개")}</span>${out ? `<small>${cat === "부품" ? "미장착" : "남음"} ${avail}</small>` : ""}</div>
+        ${w ? `<button type="button" data-act="inc" aria-label="${esc(it.name)} 1개 더하기">+</button>` : ""}
+      </div>
+      <div class="row-actions">
+        ${w && out && cat !== "소모품" ? `<button type="button" class="btn small" data-act="back">${K.end}</button>` : ""}
+        ${w ? `<button type="button" class="btn small${out && cat !== "소모품" ? " ghost" : ""}" data-act="use" ${avail <= 0 ? "disabled" : ""}>${K.start}</button>` : ""}
+        <button type="button" class="btn small ghost" data-act="open">${w ? "편집" : "보기"}</button>
+      </div></div>
+    </div>`;
+  }
+
+  function renderRows() {
+    const rows = $("#rows");
+    if (!S.loaded.items) { rows.innerHTML = `<div class="empty"><span>목록을 불러오는 중…</span></div>`; return; }
+    if (!S.items.length) { rows.innerHTML = `<div class="empty"><strong>아직 등록된 품목이 없습니다</strong><span>여러 개는 ‘구매·입고 등록’으로 한 번에, 하나만 넣을 때는 ‘품목 1개 등록’을 쓰세요.</span></div>`; return; }
+    const list = filtered();
+    rows.innerHTML = list.length ? list.map(rowHtml).join("") : `<div class="empty"><span>조건에 맞는 품목이 없습니다.</span></div>`;
+  }
+
+  const recMap = new Map();
+  const delBtn = (l) => S.canWrite && l.id ? `<button class="rec-del" type="button" data-delrec="${esc(l.id)}" aria-label="${esc(l.itemName)} 기록 삭제">삭제</button>` : "";
+  function recHtml(l, withName = true) {
+    if (l.id) recMap.set(l.id, l);
+    if (l.kind === "조정") {
+      const head = `<span class="kind adj">${l.dir > 0 ? "수량 추가" : "수량 제거"}</span>`;
+      return `<div class="hist-item" data-rec="${esc(l.id || "")}"><div>${withName ? `<div style="font-weight:600">${head}${esc(l.itemName)}</div>` : `<div>${head}</div>`}
+        <div class="line"><b>${esc(person(l.team, l.role, l.name) || "기록 없음")}</b> ${l.dir > 0 ? "+" : "−"}${esc(l.qty)}개 · 총 ${esc(l.before)} → ${esc(l.after)}개 · ${fmtDT(l.borrowedAt)}${l.note ? ` · ${esc(l.note)}` : ""}</div></div><div class="hist-side">${delBtn(l)}</div></div>`;
+    }
+    const k = kindOf(l), K = KIND[k] || KIND.부품;
+    const head = `<span class="kind ${K.cls}">${esc(k === "소모품" ? "사용" : k === "공구" ? "공구" : "장착")}</span>`;
+    const from = l.fromLocation ? ` ← <span class="loc">${esc(l.fromLocation)}</span>` : "";
+    const out = `<b>${esc(person(l.team, l.role, l.name) || "기록 없음")}</b> ${esc(l.qty)}개 ${k === "소모품" ? "사용" : K.start}${l.spot ? ` (${esc(l.spot)})` : ""} · ${fmtDT(l.borrowedAt, k !== "소모품")}${k === "부품" ? "" : from}${l.note ? ` · ${esc(l.note)}` : ""}`;
+    let back = "";
+    if (k !== "소모품") {
+      if (l.open) back = `<div class="line">아직 ${K.open}</div>`;
+      else {
+        const lost = Number(l.consumedQty) || 0;
+        back = `<div class="line"><b>${esc(person(l.retTeam, l.retRole, l.retName) || "기록 없음")}</b> ${esc(l.returnedQty ?? l.qty)}개 ${K.endDone}${lost ? ` · ${lost}개 ${K.lost}` : ""} · ${fmtDT(l.returnedAt)}${l.retLocation ? ` → <span class="loc">${esc(l.retLocation)}</span>` : ""}</div>`;
+      }
+    }
+    return `<div class="hist-item" data-rec="${esc(l.id || "")}"><div>${withName ? `<div style="font-weight:600">${head}${esc(l.itemName)}</div>` : `<div>${head}</div>`}<div class="line">${out}</div>${back}</div><div class="hist-side">${mini(l.pickPhoto, `${l.itemName} 꺼낸 자리`)}${mini(l.retPhoto, `${l.itemName} 둔 자리`)}${delBtn(l)}</div></div>`;
+  }
+
+  function renderSide() {
+    const buy = S.items.filter(isLow).sort((a, b) => String(a.name).localeCompare(String(b.name), "ko"));
+    $("#buyCount").textContent = buy.length;
+    $("#buyNeed").innerHTML = buy.map((it) => `<li>${esc(it.name)}${it.spec ? ` (${esc(it.spec)})` : ""} <span>현재 ${qtyOf(it)} / 최소 ${esc(it.minQty)}</span></li>`).join("");
+    $("#buyHint").hidden = buy.length > 0;
+    $("#copyBuy").hidden = buy.length === 0;
+    $("#buyText").value = buy.map((it) => `- ${it.name}${it.spec ? ` (${it.spec})` : ""}${it.team ? ` [${it.team}]` : ""}: 현재 ${qtyOf(it)}${it.unit || "개"}, 최소 ${it.minQty}${it.unit || "개"}`).join("\n");
+    // 최근 3건만 보이고, 나머지는 펼쳐서 본다
+    const all = S.recent, rest = Math.max(0, all.length - 3);
+    const shown = S.histOpen ? all : all.slice(0, 3);
+    $("#history").innerHTML = all.length
+      ? shown.map((l) => recHtml(l)).join("") + (rest ? `<button class="hist-more" type="button" id="histMore" aria-expanded="${S.histOpen ? "true" : "false"}">${S.histOpen ? "접기 ▴" : `이전 기록 ${rest}건 더 보기 ▾`}</button>` : "")
+      : `<p class="hint">대여·사용 기록이 생기면 여기에 쌓입니다.</p>`;
+  }
+
+  // ================= 구매현황 =================
+  function allLines() {
+    const rows = [];
+    for (const p of S.purchases) for (const ln of p.lines || []) rows.push({ p, ln });
+    return rows.sort((a, b) => String(b.p.date || "").localeCompare(String(a.p.date || "")) || (b.p.createdAt || 0) - (a.p.createdAt || 0));
+  }
+  const lineAmount = (ln) => (ln.amount != null ? Number(ln.amount) : Number(ln.unitPrice) > 0 ? Number(ln.unitPrice) * (Number(ln.qty) || 0) : null);
+  const purchaseTotal = (p) => (Number(p.amount) > 0 ? Number(p.amount) : (p.lines || []).reduce((a, ln) => a + (lineAmount(ln) || 0), 0));
+
+  function renderPurchases() {
+    const ps = S.purchases;
+    const byTeam = {};
+    ps.forEach((p) => { byTeam[p.team] = (byTeam[p.team] || 0) + purchaseTotal(p); });
+    const total = ps.reduce((a, p) => a + purchaseTotal(p), 0);
+    $("#teamSum").innerHTML = `<button type="button" class="chip" data-bteam="" aria-pressed="${!S.buyTeam}">전체<b>${won(total)}</b></button>` +
+      Object.keys(byTeam).sort((a, b) => a.localeCompare(b, "ko")).map((t) => `<button type="button" class="chip" data-bteam="${esc(t)}" aria-pressed="${S.buyTeam === t}">${esc(t)}<b>${won(byTeam[t])}</b></button>`).join("");
+    document.querySelectorAll("[data-bview]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.bview === S.buyView)));
+    $("#buyItemsView").hidden = S.buyView !== "items"; $("#buyOrdersView").hidden = S.buyView !== "orders";
+
+    // 품목별 가격표
+    const rows = allLines().filter(({ p }) => !S.buyTeam || p.team === S.buyTeam);
+    if (!rows.length) {
+      $("#priceTable").innerHTML = `<tbody><tr><td class="hint">아직 구매 기록이 없습니다. ‘구매 등록’에서 구매 팀을 적고 품목별 단가와 영수증을 남기면 여기에 모입니다.</td></tr></tbody>`;
+    } else {
+      const sum = rows.reduce((a, { ln }) => a + (lineAmount(ln) || 0), 0);
+      $("#priceTable").innerHTML = `<thead><tr><th>구매일</th><th>팀</th><th>품목</th><th>분류</th><th class="num">수량</th><th class="num">단가</th><th class="num">금액</th><th>구매 목적</th><th>사용처</th><th>구매처</th><th>영수증</th></tr></thead><tbody>` +
+        rows.map(({ p, ln }) => {
+          const amt = lineAmount(ln);
+          return `<tr><td class="mono" style="white-space:nowrap">${esc(p.date || "")}</td><td>${esc(p.team)}</td>
+            <td><b>${esc(ln.name)}</b>${ln.spec ? ` <span class="desc" style="display:inline">${esc(ln.spec)}</span>` : ""}${ln.description ? `<div class="desc">${esc(ln.description)}</div>` : ""}</td>
+            <td><span class="kind ${(KIND[ln.category] || KIND.부품).cls}">${esc(ln.category || "부품")}</span>${ln.group ? `<div class="desc">${esc(ln.group)}</div>` : ""}</td>
+            <td class="num">${esc(ln.qty)}${esc(ln.unit || "개")}</td>
+            <td class="num">${Number(ln.unitPrice) > 0 ? won(ln.unitPrice) : "–"}</td>
+            <td class="num">${amt != null ? won(amt) : "–"}</td>
+            <td>${esc(ln.purpose || "")}</td><td>${esc(ln.usage || "")}</td><td>${esc(p.vendor || "")}</td>
+            <td>${(p.receipts || []).length ? mini(p.receipts[0], `${p.team} ${p.date || ""} 영수증`) + ((p.receipts || []).length > 1 ? `<span class="hint"> +${p.receipts.length - 1}</span>` : "") : `<span class="hint">없음</span>`}</td></tr>`;
+        }).join("") + `</tbody><tfoot><tr><td colspan="6">합계 (단가를 적은 품목)</td><td class="num">${won(sum)}</td><td colspan="4"></td></tr></tfoot>`;
+    }
+
+    // 구매 건별
+    const list = [...ps].filter((p) => !S.buyTeam || p.team === S.buyTeam)
+      .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || (b.createdAt || 0) - (a.createdAt || 0));
+    $("#purchases").innerHTML = list.length ? list.map((p) => `
+      <article class="purchase" data-pid="${esc(p.id)}">
+        <div>
+          <div class="p-top"><strong>${esc(p.team)}</strong><span class="mono">${esc(p.date || "")}</span>${p.vendor ? `<span>${esc(p.vendor)}</span>` : ""}<span class="amt">${purchaseTotal(p) ? won(purchaseTotal(p)) : "금액 미기재"}</span></div>
+          ${p.memo ? `<div class="desc">${esc(p.memo)}</div>` : ""}
+          <ul>${(p.lines || []).map((ln) => `<li><b>${esc(ln.name)}</b>${ln.spec ? ` (${esc(ln.spec)})` : ""} · ${esc(ln.qty)}${esc(ln.unit || "개")}${Number(ln.unitPrice) > 0 ? ` × ${won(ln.unitPrice)}` : ""} <span class="kind ${(KIND[ln.category] || KIND.부품).cls}">${esc(ln.category || "부품")}</span>
+            ${ln.purpose || ln.usage ? `<div class="desc">${ln.purpose ? `목적: ${esc(ln.purpose)}` : ""}${ln.purpose && ln.usage ? " · " : ""}${ln.usage ? `사용처: ${esc(ln.usage)}` : ""}</div>` : ""}</li>`).join("")}</ul>
+          <div class="meta" style="margin-top:6px">${p.by ? `등록: ${esc(p.by)} · ` : ""}${ago(p.createdAt)}</div>
+        </div>
+        <div class="p-side">
+          <div class="receipts">${(p.receipts || []).map((r, i) => mini(r, `${p.team} ${p.date || ""} 영수증 ${i + 1}`)).join("") || `<span class="hint">영수증 없음</span>`}</div>
+          ${S.canWrite && assets ? `<button class="btn small" type="button" data-addrec="${esc(p.id)}"><svg class="icon"><use href="#i-receipt"/></svg>영수증 추가</button>` : ""}
+          ${S.canWrite ? (S.delPurchase === p.id
+            ? `<div class="inline-confirm"><span>구매 기록을 지울까요? 재고 수량은 그대로입니다.</span><button class="btn small danger" type="button" data-pdel-yes="${esc(p.id)}">삭제</button><button class="btn small" type="button" data-pdel-no>취소</button></div>`
+            : `<button class="btn small ghost danger" type="button" data-pdel="${esc(p.id)}">기록 삭제</button>`) : ""}
+        </div>
+      </article>`).join("")
+      : `<div class="empty list"><strong>아직 구매 기록이 없습니다</strong><span>‘구매 등록’에서 구매 팀을 적고 영수증 사진을 올리면 팀별로 모입니다.</span></div>`;
+  }
+
+  // ================= 배송현황 =================
+  function trackUrl(s) {
+    const no = String(s.trackingNo || "").trim(); if (!no) return "";
+    if (s.mall === "알리익스프레스" || /해외/.test(s.courier || "")) return "https://t.17track.net/ko#nums=" + encodeURIComponent(no);
+    return "https://search.naver.com/search.naver?query=" + encodeURIComponent(`${s.courier || "택배"} ${no}`);
+  }
+  function dday(eta) {
+    if (!eta) return "";
+    const d = Math.round((new Date(eta + "T00:00:00") - new Date(today() + "T00:00:00")) / DAY);
+    return d > 0 ? `<span class="dday">D-${d}</span>` : d === 0 ? `<span class="dday">오늘 도착 예정</span>` : `<span class="dday late">예정일 ${-d}일 지남</span>`;
+  }
+  function renderShips() {
+    const cnt = (st) => S.ships.filter((s) => (!st || s.status === st) && (!S.shipMall || s.mall === S.shipMall)).length;
+    $("#shipChips").innerHTML = `<button type="button" class="chip" data-sst="" aria-pressed="${!S.shipStatus}">전체<b>${cnt("")}</b></button>` +
+      STATUSES.map((st) => `<button type="button" class="chip" data-sst="${st}" aria-pressed="${S.shipStatus === st}">${st}<b>${cnt(st)}</b></button>`).join("");
+    $("#mallFilter").innerHTML = `<option value="">모든 쇼핑몰</option>` + MALLS.map((m) => `<option ${S.shipMall === m ? "selected" : ""}>${m}</option>`).join("");
+    $("#shipAdd").hidden = !S.canWrite;
+    const list = S.ships.filter((s) => (!S.shipStatus || s.status === S.shipStatus) && (!S.shipMall || s.mall === S.shipMall))
+      .sort((a, b) => STATUSES.indexOf(a.status) - STATUSES.indexOf(b.status) || String(a.eta || "9").localeCompare(String(b.eta || "9")));
+    $("#shipList").innerHTML = list.length ? list.map((s) => {
+      const si = Math.max(STATUSES.indexOf(s.status), 0), next = STATUSES[si + 1];
+      const tu = trackUrl(s), ou = MALL_ORDER_URL[s.mall];
+      return `<article class="ship" data-sid="${esc(s.id)}">
+        <div>
+          <div class="s-top"><span class="mall">${esc(s.mall)}</span><span class="status s${si}">${esc(s.status)}</span>${s.status !== "입고완료" ? dday(s.eta) : ""}${s.team ? `<span class="pill team">${esc(s.team)}</span>` : ""}</div>
+          <ul>${(s.items || []).map((it) => `<li><b>${esc(it.name)}</b> · ${esc(it.qty)}개${Number(it.unitPrice) > 0 ? ` · ${won(it.unitPrice)}` : ""} <span class="kind ${(KIND[it.category] || KIND.부품).cls}">${esc(it.category || "부품")}</span></li>`).join("") || `<li class="hint">품목 미기재</li>`}</ul>
+          <div class="s-meta">
+            ${s.orderNo ? `<span>주문번호 <span class="mono">${esc(s.orderNo)}</span></span>` : ""}
+            ${s.orderedAt ? `<span>주문 ${esc(s.orderedAt)}</span>` : ""}${s.eta ? `<span>도착 예정 ${esc(s.eta)}</span>` : ""}
+            ${s.trackingNo ? `<span>${esc(s.courier || "택배")} <span class="mono">${esc(s.trackingNo)}</span></span>` : `<span class="hint">운송장 번호 미입력</span>`}
+          </div>
+          ${s.memo ? `<div class="desc">${esc(s.memo)}</div>` : ""}
+          <div class="meta">${s.by ? `등록: ${esc(s.by)} · ` : ""}수정 ${ago(s.updatedAt || s.createdAt)}</div>
+        </div>
+        <div class="s-actions">
+          ${tu ? `<a class="btn small" href="${esc(tu)}" target="_blank" rel="noopener"><svg class="icon"><use href="#i-truck"/></svg>배송 조회</a>` : ""}
+          ${ou ? `<a class="btn small" href="${esc(ou)}" target="_blank" rel="noopener"><svg class="icon"><use href="#i-out"/></svg>주문 내역</a>` : ""}
+          ${S.canWrite && next && next !== "입고완료" ? `<button class="btn small" type="button" data-snext="${esc(s.id)}">${next}(으)로</button>` : ""}
+          ${S.canWrite && s.status !== "입고완료" ? `<button class="btn small primary" type="button" data-sin="${esc(s.id)}">입고 처리</button>` : ""}
+          ${S.canWrite ? `<button class="btn small ghost" type="button" data-sedit="${esc(s.id)}">편집</button>` : ""}
+        </div>
+      </article>`;
+    }).join("") : `<div class="empty list"><strong>${S.ships.length ? "조건에 맞는 배송이 없습니다" : "등록된 배송이 없습니다"}</strong><span>주문하면 ‘배송 등록’에서 쇼핑몰, 주문번호, 운송장 번호를 남겨두세요. 주문 안내 문구를 붙여넣으면 AI가 채워줍니다.</span></div>`;
+  }
+
+  function render() {
+    ["#addBtn", "#buyBtn", "#buyBtn2"].forEach((s) => ($(s).hidden = !S.canWrite));
+    renderChips(); renderStats(); renderTools(); renderConsumables(); renderParts(); renderRows(); renderSide(); renderPurchases(); renderShips();
+    const opt = (arr) => arr.map((v) => `<option value="${esc(v)}">`).join("");
+    $("#locList").innerHTML = opt([...new Set(S.items.map((i) => i.location).filter(Boolean))].sort());
+    $("#teamList").innerHTML = opt([...new Set([...teams(), savedMe().team, ...S.recent.flatMap((l) => [l.team, l.retTeam])].filter(Boolean))]);
+    $("#groupList").innerHTML = opt([...new Set(["체결류", "전장", "서스펜션", "브레이크", "구동계", "차체", "측정 공구", "수공구", "전동 공구", ...S.items.map((i) => i.group)].filter(Boolean))]);
+    $("#nameList").innerHTML = opt([...new Set(S.items.map((i) => i.name))].sort());
+  }
+
+  // ---------- 수량 ± ----------
+  function bumpQty(id, d) {
+    const it = S.items.find((x) => x.id === id); if (!it) return;
+    const next = Math.max(0, qtyOf(it) + d);
+    const p = pendingQty.get(id) || {};
+    const base = p.base ?? (Number(it.qty) || 0);
+    clearTimeout(p.timer);
+    const timer = setTimeout(async () => {
+      const cur = pendingQty.get(id);
+      try {
+        await db.doc("items/" + id).update({ qty: cur.qty, updatedAt: Date.now(), updatedBy: S.me });
+        if (cur.qty !== cur.base) await logAdjust(it, cur.base, cur.qty, "전체 품목에서 조정").catch(() => {});
+      } catch (e) { writeFailed(e, "수량 저장"); }
+      if (pendingQty.get(id) === cur) pendingQty.delete(id);
+      render();
+    }, 700);
+    pendingQty.set(id, { qty: next, timer, base });
+    render();
+  }
+
+  // ---------- 품목 1개 ----------
+  async function openItem(it) {
+    S.editing = it || null; S.photoFile = null;
+    $("#itemTitle").textContent = it ? (S.canWrite ? "품목 편집" : "품목 정보") : "품목 1개 등록";
+    $("#fName").value = it?.name || ""; $("#fCat").value = it?.category || "부품"; $("#fGroup").value = it?.group || "";
+    $("#fSpec").value = it?.spec || ""; $("#fTeam").value = it?.team || (it ? "" : savedMe().team || "");
+    $("#fQty").value = it ? qtyOf(it) : 1; $("#fUnit").value = it?.unit || "개"; $("#fLoc").value = it?.location || "";
+    $("#fMin").value = it?.minQty ?? 0; $("#fDesc").value = it ? descOf(it) : "";
+    setPrev("#fPhotoPrev", it?.photo ? photoUrl(it.photo) : "", "보관 위치");
+    $("#delBtn").hidden = !(it && S.canWrite); $("#delConfirm").hidden = true; $("#saveBtn").hidden = !S.canWrite;
+    $("#itemForm").querySelectorAll("input, select, textarea").forEach((el) => (el.disabled = !S.canWrite));
+    $("#fPhotoLabel").hidden = !S.canWrite || !assets;
+    $("#photoHint").textContent = !assets ? "이 화면에서는 사진을 저장할 수 없습니다." : it?.photo ? "새로 찍으면 보관 위치 사진이 바뀝니다." : "어디에 두었는지 찍어두면 위치를 모르는 팀원도 찾을 수 있습니다.";
+    $("#fMeta").textContent = [it?.lastUse ? `최근 ${it.lastUse.action}: ${it.lastUse.who} · ${ago(it.lastUse.at)}` : "", Number(it?.lastUnitPrice) > 0 ? `최근 구매 단가 ${won(it.lastUnitPrice)}` : ""].filter(Boolean).join(" · ");
+    $("#itemHistBox").hidden = true;
+    refreshSameItem();
+    $("#itemDlg").showModal();
+    if (!it) $("#fName").focus();
+    if (it && db) {
+      try {
+        const snap = await db.collection("loans").where("itemId", "==", it.id).limit(300).get();
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (b.borrowedAt || 0) - (a.borrowedAt || 0));
+        if (S.editing === it && list.length) {
+          const uses = list.filter((l) => l.kind !== "조정");
+          const took = uses.reduce((a, l) => a + (Number(l.qty) || 0), 0);
+          const used = uses.reduce((a, l) => a + (kindOf(l) === "소모품" ? Number(l.qty) || 0 : Number(l.consumedQty) || 0), 0);
+          $("#itemHist").innerHTML = `<p class="hint" style="margin:0 0 4px">기록 ${list.length}건 · 꺼낸 수량 합계 ${took}개 · 소진·분실 ${used}개${list.length > uses.length ? ` · 수량 변경 ${list.length - uses.length}건` : ""}</p>` + list.slice(0, 12).map((l) => recHtml(l, false)).join("");
+          $("#itemHistBox").hidden = false;
+        }
+      } catch { /* 이력 없이 표시 */ }
+    }
+  }
+  function refreshSameItem() {
+    const same = $("#fName").value.trim() ? findSame($("#fName").value, $("#fSpec").value, S.editing?.id) : null;
+    const el = $("#fSame");
+    el.hidden = !same || !!S.editing;
+    if (same && !S.editing) el.textContent = `이미 있는 품목입니다 → 저장하면 새 줄을 만들지 않고 ‘${same.name}${same.spec ? ` ${same.spec}` : ""}’ 수량 ${qtyOf(same)}에 더합니다.`;
+  }
+  async function saveItem(ev) {
+    ev.preventDefault();
+    if (!S.canWrite || !db) return;
+    const name = $("#fName").value.trim(); if (!name) { $("#fName").focus(); return; }
+    const btn = $("#saveBtn"); btn.disabled = true; btn.textContent = "저장 중…";
+    try {
+      let photo = S.editing?.photo || null;
+      if (S.photoFile) photo = (await uploadPhoto(S.photoFile)) || photo;
+      const body = {
+        name, category: $("#fCat").value, group: $("#fGroup").value.trim(), spec: $("#fSpec").value.trim(), team: $("#fTeam").value.trim(),
+        qty: Math.max(0, Math.floor(Number($("#fQty").value) || 0)), unit: $("#fUnit").value, location: $("#fLoc").value.trim(),
+        minQty: Math.max(0, Math.floor(Number($("#fMin").value) || 0)), description: $("#fDesc").value.trim(), photo,
+        updatedAt: Date.now(), updatedBy: S.me,
+      };
+      if (S.editing) { pendingQty.delete(S.editing.id); await db.doc("items/" + S.editing.id).update(body); toast("저장했습니다."); }
+      else {
+        const same = findSame(name, body.spec);
+        if (same) {
+          const nq = qtyOf(same) + body.qty;
+          pendingQty.delete(same.id);
+          await db.doc("items/" + same.id).update({ qty: nq, updatedAt: Date.now(), updatedBy: S.me, ...(photo && !same.photo ? { photo } : {}) });
+          toast(`이미 있는 ‘${same.name}’에 ${body.qty}${same.unit || "개"}를 더했습니다. 총 ${nq}${same.unit || "개"}`);
+        } else {
+          await db.collection("items").add({ ...body, createdAt: Date.now(), createdBy: S.me });
+          toast(`‘${name}’을(를) 등록했습니다.`);
+        }
+      }
+      $("#itemDlg").close();
+    } catch (e) { writeFailed(e, "저장"); }
+    finally { btn.disabled = false; btn.textContent = "저장"; }
+  }
+  async function deleteItem() {
+    const it = S.editing; if (!it) return;
+    try { await db.doc("items/" + it.id).delete(); $("#itemDlg").close(); toast(`‘${it.name}’을(를) 삭제했습니다.`); }
+    catch (e) { writeFailed(e, "삭제"); }
+  }
+
+  // ---------- 꺼내기 ----------
+  function openUse(it) {
+    const cat = it.category || "부품", K = KIND[cat] || KIND.부품;
+    S.useItem = it; S.usePhoto = null;
+    const avail = Math.max(qtyOf(it) - outOf(it.id), 0);
+    $("#useTitle").textContent = cat === "소모품" ? "소모품 사용" : K.start;
+    $("#useWhat").innerHTML = `<b>${esc(it.name)}</b>${it.spec ? ` · ${esc(it.spec)}` : ""} — ${cat === "소모품" ? "남은" : "꺼낼 수 있는"} 수량 <span class="mono">${avail}</span>${esc(it.unit || "개")}`;
+    $("#uQtyLabel").textContent = cat === "소모품" ? "사용한 수량" : cat === "공구" ? "꺼낸 수량" : "장착 수량";
+    $("#uSpotField").hidden = cat !== "부품"; $("#uSpot").value = "";
+    $("#uQty").max = String(avail); $("#uQty").value = 1; $("#uNote").value = "";
+    const dateOnly = cat === "소모품";
+    $("#uWhen").type = dateOnly ? "date" : "datetime-local";
+    $("#uWhen").value = dateOnly ? today() : nowLocal();
+    $("#uWhenLabel").textContent = dateOnly ? "사용 일자" : cat === "공구" ? "사용 시작 일시" : "장착 일시";
+    $("#uWhoTitle").textContent = K.who;
+    fillPerson("u");
+    $("#uLoc").value = it.location || "";
+    setPrev("#uPhotoPrev", it.photo ? photoUrl(it.photo) : "", "현재 보관 위치");
+    $("#uPhotoLabel").hidden = !assets;
+    $("#useSave").textContent = cat === "소모품" ? "사용 기록" : `${K.start} 기록`;
+    $("#useDlg").showModal();
+  }
+  async function saveUse(ev) {
+    ev.preventDefault();
+    const it = S.useItem; if (!it || !db) return;
+    const cat = it.category || "부품", K = KIND[cat] || KIND.부품;
+    const avail = Math.max(qtyOf(it) - outOf(it.id), 0);
+    const n = Math.floor(Number($("#uQty").value) || 0);
+    if (n < 1 || n > avail) { toast(`1~${avail} 사이로 입력해 주세요.`); return; }
+    const spot = $("#uSpot").value.trim();
+    if (cat === "부품" && !spot) { toast("장착 부위를 적어 주세요."); $("#uSpot").focus(); return; }
+    const p = readPerson("u"); if (!p) return;
+    const btn = $("#useSave"); btn.disabled = true;
+    try {
+      const pickPhoto = await uploadPhoto(S.usePhoto);
+      const now = readWhen($("#uWhen").value), who = person(p.t, p.r, p.n), consumable = cat === "소모품";
+      await db.collection("loans").add({
+        kind: cat, itemId: it.id, itemName: it.name, qty: n, note: $("#uNote").value.trim(),
+        team: p.t, role: p.r, name: p.n, borrower: S.me, borrowedAt: now, open: !consumable,
+        fromLocation: $("#uLoc").value.trim() || it.location || "", pickPhoto, ...(cat === "부품" ? { spot } : {}),
+        ...(consumable ? { consumedQty: n } : {}),
+      });
+      const patch = { lastUse: { action: consumable ? "사용" : cat === "부품" ? `장착(${spot})` : K.start, who, at: now, qty: n } };
+      if (consumable) { patch.qty = Math.max(qtyOf(it) - n, 0); pendingQty.delete(it.id); }
+      await db.doc("items/" + it.id).update(patch).catch((e) => writeFailed(e, "재고 갱신"));
+      $("#useDlg").close();
+      toast(consumable ? `${who}님이 ‘${it.name}’ ${n}${it.unit || "개"}를 사용했습니다. 남은 수량 ${Math.max(qtyOf(it) - n, 0)}` : `${who}님 ${K.start}: ‘${it.name}’ ${n}${it.unit || "개"}`);
+    } catch (e) { writeFailed(e, "기록"); }
+    finally { btn.disabled = false; }
+  }
+
+  // ---------- 기록 삭제 ----------
+  // 지우면 그 기록이 바꿔 놓은 수량을 되돌린다
+  function recEffect(l) {
+    const it = S.items.find((x) => x.id === l.itemId);
+    let delta = 0;
+    if (l.kind === "조정") delta = -(Number(l.dir) || 0) * (Number(l.qty) || 0);
+    else if (kindOf(l) === "소모품") delta = Number(l.consumedQty ?? l.qty) || 0;
+    else if (!l.open) delta = Number(l.consumedQty) || 0;
+    const before = it ? qtyOf(it) : 0;
+    return { it, delta, before, after: Math.max(before + delta, 0) };
+  }
+  function openRecDelete(id) {
+    const l = recMap.get(id); if (!l) return;
+    S.delRec = l;
+    const k = l.kind === "조정" ? "조정" : kindOf(l), K = KIND[k] || KIND.부품;
+    const what = k === "조정" ? `${l.dir > 0 ? "수량 추가" : "수량 제거"} ${l.dir > 0 ? "+" : "−"}${l.qty}개`
+      : k === "소모품" ? `사용 ${l.qty}개` : `${K.start} ${l.qty}개${l.open ? ` (아직 ${K.open})` : ` → ${K.endDone}`}`;
+    $("#rdWhat").innerHTML = `<b>${esc(l.itemName)}</b> · ${esc(what)}<div class="hint" style="margin-top:2px">${esc(person(l.team, l.role, l.name) || "기록 없음")} · ${fmtDT(l.borrowedAt)}${l.note ? ` · ${esc(l.note)}` : ""}</div>`;
+    const ef = recEffect(l), unit = ef.it?.unit || "개";
+    $("#rdRevertRow").hidden = !(ef.it && ef.delta);
+    $("#rdRevert").checked = true;
+    if (ef.it && ef.delta) $("#rdRevertLabel").innerHTML = `수량도 되돌리기 — 지금 <b>${ef.before}${esc(unit)}</b> → <b>${ef.after}${esc(unit)}</b>`;
+    $("#rdNote").textContent = !ef.it ? "품목이 이미 지워져서 기록만 삭제됩니다."
+      : ef.delta ? "기록을 잘못 넣었다면 수량도 되돌리세요. 수량은 이미 맞게 고쳐 두었다면 체크를 해제하세요."
+      : l.open ? `지우면 ‘${K.open}’ 표시도 함께 사라집니다.` : "수량에 영향을 주지 않은 기록이라 기록만 지워집니다.";
+    $("#recDelDlg").showModal();
+  }
+  async function confirmRecDelete(ev) {
+    ev.preventDefault();
+    const l = S.delRec; if (!l || !db) return;
+    const btn = $("#rdYes"); btn.disabled = true;
+    try {
+      const ef = recEffect(l), revert = ef.it && ef.delta && $("#rdRevert").checked;
+      await db.doc("loans/" + l.id).delete();
+      if (ef.it) {
+        const patch = {};
+        if (revert) { patch.qty = ef.after; pendingQty.delete(ef.it.id); }
+        const lu = ef.it.lastUse;
+        if (lu && (lu.at === l.borrowedAt || (l.returnedAt && lu.at === l.returnedAt))) patch.lastUse = null;
+        if (Object.keys(patch).length) await db.doc("items/" + ef.it.id).update({ ...patch, updatedAt: Date.now(), updatedBy: S.me }).catch((e) => writeFailed(e, "수량 되돌리기"));
+      }
+      recMap.delete(l.id);
+      document.querySelectorAll(`[data-rec="${CSS.escape(l.id)}"]`).forEach((n) => n.remove());
+      $("#recDelDlg").close(); S.delRec = null;
+      toast(`‘${l.itemName}’ 기록을 삭제했습니다${revert ? ` · 수량 ${ef.before} → ${ef.after}` : ""}`);
+    } catch (e) { writeFailed(e, "기록 삭제"); }
+    finally { btn.disabled = false; }
+  }
+
+  // ---------- 돌려놓기 ----------
+  function updateLost() {
+    const l = S.retRec; if (!l) return;
+    const back = Math.min(Math.max(Math.floor(Number($("#rQty").value) || 0), 0), Number(l.qty) || 0);
+    $("#rUsed").textContent = `${(Number(l.qty) || 0) - back}개`;
+  }
+  function openReturnForItem(itemId) {
+    const recs = S.openRecs.filter((r) => r.itemId === itemId).sort((a, b) => (a.borrowedAt || 0) - (b.borrowedAt || 0));
+    if (!recs.length) return;
+    $("#rRecField").hidden = recs.length < 2;
+    $("#rRec").innerHTML = recs.map((r) => `<option value="${esc(r.id)}">${esc(fmtDT(r.borrowedAt))} · ${r.spot ? `${esc(r.spot)} · ` : ""}${esc(person(r.team, r.role, r.name))} · ${esc(r.qty)}개</option>`).join("");
+    openReturn(recs[0].id, true);
+  }
+  function openReturn(id, keepSelect) {
+    const l = S.openRecs.find((x) => x.id === id); if (!l) return;
+    if (!keepSelect) $("#rRecField").hidden = true;
+    $("#rRec").value = id;
+    const k = kindOf(l), K = KIND[k] || KIND.부품, it = S.items.find((x) => x.id === l.itemId);
+    S.retRec = l; S.retPhoto = null;
+    $("#retTitle").textContent = K.end;
+    $("#retWhat").innerHTML = `<b>${esc(l.itemName)}</b> — ${esc(person(l.team, l.role, l.name) || "기록 없음")} ${esc(l.qty)}개 ${K.start}${l.spot ? ` (${esc(l.spot)})` : ""} · <span class="mono">${fmtDT(l.borrowedAt)}</span>${l.fromLocation && k !== "부품" ? ` · ${esc(l.fromLocation)}에서 꺼냄` : ""}`;
+    $("#rWhen").value = nowLocal();
+    $("#rWhenLabel").textContent = k === "공구" ? "사용 완료 일시" : "탈거 일시";
+    $("#rQtyLabel").textContent = k === "공구" ? "돌려놓은 수량" : "탈거해서 보관하는 수량";
+    $("#rUsedLabel").textContent = K.lost; $("#rUsedHint").textContent = K.lostHint;
+    $("#rWhoTitle").textContent = K.backWho;
+    $("#rQty").max = String(l.qty); $("#rQty").value = l.qty; updateLost();
+    fillPerson("r");
+    $("#rLoc").value = l.fromLocation || it?.location || "";
+    setPrev("#rPhotoPrev", it?.photo ? photoUrl(it.photo) : "", "현재 보관 위치");
+    $("#rPhotoLabel").hidden = !assets;
+    $("#retSave").textContent = `${K.end} 기록`;
+    $("#retDlg").showModal();
+  }
+  async function saveReturn(ev) {
+    ev.preventDefault();
+    const l = S.retRec; if (!l || !db) return;
+    const k = kindOf(l), K = KIND[k] || KIND.부품, borrowed = Number(l.qty) || 0;
+    const back = Math.floor(Number($("#rQty").value));
+    if (!(back >= 0 && back <= borrowed)) { toast(`수량은 0~${borrowed} 사이여야 합니다.`); return; }
+    const p = readPerson("r"); if (!p) return;
+    const loc = $("#rLoc").value.trim(); if (!loc) { toast("둔 위치를 적어 주세요."); $("#rLoc").focus(); return; }
+    const btn = $("#retSave"); btn.disabled = true;
+    try {
+      const photo = await uploadPhoto(S.retPhoto);
+      const now = readWhen($("#rWhen").value), lost = borrowed - back, who = person(p.t, p.r, p.n);
+      if (now < (l.borrowedAt || 0)) { toast("완료 일시가 시작 일시보다 빠릅니다. 다시 확인해 주세요."); btn.disabled = false; return; }
+      await db.doc("loans/" + l.id).update({
+        open: false, returnedAt: now, returnedBy: S.me, returnedQty: back, consumedQty: lost,
+        retTeam: p.t, retRole: p.r, retName: p.n, retLocation: loc, retPhoto: photo,
+      });
+      const it = S.items.find((x) => x.id === l.itemId);
+      if (it) {
+        const patch = { location: loc, lastUse: { action: K.endDone, who, at: now, qty: back }, updatedAt: now, updatedBy: S.me };
+        if (photo) patch.photo = photo;
+        if (lost > 0) { patch.qty = Math.max(qtyOf(it) - lost, 0); pendingQty.delete(it.id); }
+        await db.doc("items/" + it.id).update(patch).catch((e) => writeFailed(e, "위치 갱신"));
+      }
+      $("#retDlg").close();
+      toast(`${who}님 ${K.endDone}: ${back}개 → ‘${loc}’${lost ? ` (${lost}개 ${K.lost})` : ""}`);
+    } catch (e) { writeFailed(e, "기록"); }
+    finally { btn.disabled = false; }
+  }
+
+  // ---------- 구매·입고 ----------
+  let lineSeq = 0;
+  function lineHtml(v = {}) {
+    const id = "L" + ++lineSeq;
+    const sel = (opts, cur) => opts.map((o) => `<option ${o === cur ? "selected" : ""}>${o}</option>`).join("");
+    return `<div class="line-card" data-line="${id}">
+      <div class="field name-f"><label for="${id}n">이름 *</label><input id="${id}n" data-f="name" list="nameList" maxlength="80" placeholder="예: 노드락 와셔" value="${esc(v.name || "")}"></div>
+      <div class="field"><label for="${id}c">분류</label><select id="${id}c" data-f="category">${sel(CATS, v.category || "부품")}</select></div>
+      <div class="field"><label for="${id}g">세부 분류</label><input id="${id}g" data-f="group" list="groupList" maxlength="30" placeholder="예: 체결류" value="${esc(v.group || "")}"></div>
+      <div class="field"><label for="${id}s">규격</label><input id="${id}s" data-f="spec" maxlength="80" placeholder="예: M12" value="${esc(v.spec || "")}"></div>
+      <div class="field"><label for="${id}q">수량</label><input id="${id}q" data-f="qty" type="number" min="1" step="1" inputmode="numeric" value="${esc(v.qty || 1)}"></div>
+      <div class="field"><label for="${id}u">단위</label><select id="${id}u" data-f="unit">${sel(["개", "세트", "m", "롤", "통", "장"], v.unit || "개")}</select></div>
+      <div class="field"><label for="${id}p">단가 (원)</label><input id="${id}p" data-f="unitPrice" type="number" min="0" step="1" inputmode="numeric" placeholder="예: 350" value="${esc(v.unitPrice || "")}"></div>
+      <div class="field span2"><label for="${id}r">구매 목적</label><input id="${id}r" data-f="purpose" maxlength="80" placeholder="예: 풀림 재발 방지" value="${esc(v.purpose || "")}"></div>
+      <div class="field span2"><label for="${id}w">사용처</label><input id="${id}w" data-f="usage" maxlength="80" placeholder="예: 프론트 너클" value="${esc(v.usage || "")}"></div>
+      <div class="field span2"><label for="${id}l">보관 위치</label><input id="${id}l" data-f="location" list="locList" maxlength="40" placeholder="예: 선반 위" value="${esc(v.location || "")}"></div>
+      <button class="btn small ghost danger rm" type="button" data-rmline aria-label="이 줄 지우기">지우기</button>
+      <div class="field full"><label for="${id}d">설명</label><input id="${id}d" data-f="description" maxlength="200" placeholder="예: 모터 너클 풀림방지 체결용" value="${esc(v.description || "")}"></div>
+      <p class="match" data-match hidden></p>
+    </div>`;
+  }
+  const norm = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, "");
+  function findSame(name, spec, exceptId) { return S.items.find((it) => it.id !== exceptId && norm(it.name) === norm(name) && norm(it.spec) === norm(spec)); }
+  // 이름·규격·분류가 같은 줄 묶음 (같은 부품이 두 줄로 나뉜 경우)
+  const sameKey = (it) => `${norm(it.name)}|${norm(it.spec)}|${it.category || "부품"}`;
+  const twinsOf = (it) => S.items.filter((x) => sameKey(x) === sameKey(it));
+  function mergeNote(it) {
+    const tw = twinsOf(it);
+    if (tw.length < 2 || !S.canWrite) return "";
+    if (S.mergeAsk === sameKey(it)) return `<div class="inline-confirm" style="margin-top:4px"><span>같은 부품 ${tw.length}줄을 하나로 합칠까요? 수량과 기록이 모두 합쳐집니다.</span><button class="btn small primary" type="button" data-merge-yes="${esc(it.id)}">합치기</button><button class="btn small" type="button" data-merge-no>취소</button></div>`;
+    return `<div class="desc" style="color:var(--warn)">같은 부품이 ${tw.length}줄로 나뉘어 있습니다 <button class="btn small" type="button" data-merge="${esc(it.id)}" style="margin-left:4px">하나로 합치기</button></div>`;
+  }
+  async function mergeTwins(anyId) {
+    const it = S.items.find((x) => x.id === anyId); if (!it || !db) return;
+    const tw = twinsOf(it).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    const keep = tw[0], others = tw.slice(1);
+    try {
+      let total = qtyOf(keep);
+      for (const o of others) {
+        const recs = await db.collection("loans").where("itemId", "==", o.id).limit(1000).get();
+        for (const d of recs.docs) await db.doc("loans/" + d.id).update({ itemId: keep.id, itemName: keep.name });
+        total += qtyOf(o);
+      }
+      pendingQty.delete(keep.id);
+      const fill = (f) => keep[f] || others.map((o) => o[f]).find(Boolean) || "";
+      await db.doc("items/" + keep.id).update({ qty: total, group: fill("group"), description: keep.description || keep.note || others.map((o) => o.description || o.note).find(Boolean) || "", photo: keep.photo || others.map((o) => o.photo).find(Boolean) || null, updatedAt: Date.now(), updatedBy: S.me });
+      for (const o of others) await db.doc("items/" + o.id).delete();
+      S.mergeAsk = null;
+      toast(`‘${keep.name}’ ${tw.length}줄을 하나로 합쳤습니다. 총 ${total}${keep.unit || "개"}`);
+    } catch (e) { writeFailed(e, "합치기"); }
+  }
+
+  // 수량을 바꾼 일도 최근 기록에 남긴다 (kind: "조정", 열린 상태 아님)
+  async function logAdjust(it, before, after, why, p, at) {
+    const me = p || savedMe();
+    const t = p ? p.t : me.team, r = p ? p.r : me.role, n = p ? p.n : me.name;
+    await db.collection("loans").add({
+      kind: "조정", itemCat: it.category || "부품", itemId: it.id, itemName: it.name, qty: Math.abs(after - before), dir: after > before ? 1 : -1,
+      before, after, note: why || "", team: t || "", role: r || "", name: n || "", borrower: S.me, borrowedAt: at || Date.now(), open: false,
+    });
+  }
+
+  // ---------- 총 수량 추가·제거 ----------
+  function openAdjust(it, dir) {
+    S.adj = { it, dir };
+    const installed = outOf(it.id);
+    $("#adjTitle").textContent = dir > 0 ? "수량 추가" : "수량 제거";
+    $("#aQtyLabel").textContent = dir > 0 ? "추가할 수량" : "제거할 수량";
+    $("#adjWhat").innerHTML = `<b>${esc(it.name)}</b>${it.spec ? ` · ${esc(it.spec)}` : ""} — 지금 총 ${qtyOf(it)}${esc(it.unit || "개")}${installed ? ` (장착 ${installed}, 미장착 ${Math.max(qtyOf(it) - installed, 0)})` : ""}`;
+    $("#aQty").value = 1; $("#aQty").max = dir < 0 ? String(Math.max(qtyOf(it) - installed, 0)) : "";
+    $("#aWhy").value = ""; fillPerson("a"); updateAdj();
+    $("#adjDlg").showModal();
+  }
+  function updateAdj() {
+    const a = S.adj; if (!a) return;
+    const n = Math.max(0, Math.floor(Number($("#aQty").value) || 0));
+    $("#aAfter").textContent = `${Math.max(qtyOf(a.it) + a.dir * n, 0)}${a.it.unit || "개"}`;
+  }
+  async function saveAdjust(ev) {
+    ev.preventDefault();
+    const a = S.adj; if (!a || !db) return;
+    const n = Math.floor(Number($("#aQty").value) || 0);
+    const installed = outOf(a.it.id), free = Math.max(qtyOf(a.it) - installed, 0);
+    if (n < 1) { toast("1 이상으로 입력해 주세요."); return; }
+    if (a.dir < 0 && n > free) { toast(installed ? `장착된 ${installed}개는 제거할 수 없습니다. 미장착 ${free}개까지 제거할 수 있습니다.` : `최대 ${free}개까지 제거할 수 있습니다.`); return; }
+    const p = readPerson("a"); if (!p) return;
+    const who = person(p.t, p.r, p.n), now = Date.now(), why = $("#aWhy").value.trim();
+    const before = qtyOf(a.it), next = before + a.dir * n;
+    try {
+      pendingQty.delete(a.it.id);
+      await db.doc("items/" + a.it.id).update({ qty: next, lastUse: { action: `${a.dir > 0 ? "수량 추가" : "수량 제거"}${why ? `(${why})` : ""}`, who, at: now, qty: n }, updatedAt: now, updatedBy: S.me });
+      await logAdjust(a.it, before, next, why, p, now).catch(() => {});
+      $("#adjDlg").close();
+      toast(`‘${a.it.name}’ ${a.dir > 0 ? "+" : "−"}${n} → 총 ${next}${a.it.unit || "개"}`);
+    } catch (e) { writeFailed(e, "수량 변경"); }
+  }
+  function refreshMatch(card) {
+    const g = (f) => card.querySelector(`[data-f="${f}"]`).value;
+    const same = g("name").trim() ? findSame(g("name"), g("spec")) : null;
+    const m = card.querySelector("[data-match]");
+    m.hidden = !same;
+    if (same) m.textContent = `이미 있는 품목입니다 → ‘${same.name}${same.spec ? ` ${same.spec}` : ""}’ 수량 ${qtyOf(same)}에 더해집니다 (위치·설명은 그대로).`;
+  }
+  function readLines() {
+    return [...$("#bLines").querySelectorAll(".line-card")].map((c) => {
+      const g = (f) => c.querySelector(`[data-f="${f}"]`).value.trim();
+      const qty = Math.max(1, Math.floor(Number(g("qty")) || 1)), unitPrice = Math.max(0, Math.floor(Number(g("unitPrice")) || 0));
+      return { name: g("name"), category: g("category") || "부품", group: g("group"), spec: g("spec"), qty, unit: g("unit") || "개", unitPrice, amount: unitPrice ? unitPrice * qty : null, purpose: g("purpose"), usage: g("usage"), location: g("location"), description: g("description") };
+    }).filter((l) => l.name);
+  }
+  function updateSum() { const s = readLines().reduce((a, l) => a + (l.amount || 0), 0); $("#bSum").textContent = s ? `품목 금액 합계 ${won(s)}` : ""; }
+  function renderReceipts() {
+    $("#bReceipts").innerHTML = S.bReceipts.map((f, i) => `<span style="position:relative"><img class="mini" src="${esc(URL.createObjectURL(f))}" alt="영수증 ${i + 1}"><button type="button" class="btn small ghost" data-rmrec="${i}" style="position:absolute;top:-8px;right:-8px;padding:0 6px" aria-label="영수증 ${i + 1} 빼기">×</button></span>`).join("");
+  }
+  function openBuy(prefill) {
+    S.bReceipts = []; S.bLocPhoto = null; S.bFromShip = prefill?.shipId || null; renderReceipts();
+    const me = savedMe();
+    $("#bTeam").value = prefill?.team ?? me.team ?? ""; $("#bDate").value = prefill?.date || today();
+    $("#bVendor").value = prefill?.vendor || ""; $("#bAmount").value = ""; $("#bMemo").value = prefill?.memo || "";
+    $("#bwTeam").value = me.team || ""; $("#bwRole").value = me.role || ""; $("#bwName").value = me.name || "";
+    const lines = prefill?.lines?.length ? prefill.lines : [{}];
+    $("#bLines").innerHTML = lines.map((l) => lineHtml(l)).join("");
+    $("#bLines").querySelectorAll(".line-card").forEach(refreshMatch);
+    $("#bLocPhotoHint").textContent = "";
+    $("#bReceiptLabel").hidden = !assets; $("#bLocPhotoLabel").hidden = !assets;
+    $("#buyTitle").textContent = prefill?.shipId ? "입고 처리 — 도착한 품목 확인" : "구매·입고 등록";
+    updateSum();
+    $("#buyDlg").showModal();
+    $("#bLines input").focus();
+  }
+  async function saveBuy(ev) {
+    ev.preventDefault();
+    if (!db || !S.canWrite) return;
+    const lines = readLines();
+    if (!lines.length) { toast("품목을 한 줄 이상 적어 주세요."); $("#bLines input").focus(); return; }
+    const team = $("#bTeam").value.trim();
+    if (!team && S.bReceipts.length) { toast("영수증을 남기려면 구매 팀을 적어 주세요."); $("#bTeam").focus(); return; }
+    const w = readPerson("bw", false);
+    const btn = $("#bSave"); btn.disabled = true; btn.textContent = "등록 중…";
+    try {
+      const locPhoto = await uploadPhoto(S.bLocPhoto);
+      const receipts = [];
+      for (const f of S.bReceipts) { const id = await uploadPhoto(f); if (id) receipts.push(id); }
+      const now = Date.now(), by = person(w.t, w.r, w.n);
+      const outLines = []; let added = 0, merged = 0;
+      for (const l of lines) {
+        const same = findSame(l.name, l.spec);
+        if (same) {
+          const nq = qtyOf(same) + l.qty;
+          pendingQty.delete(same.id);
+          await db.doc("items/" + same.id).update({ qty: nq, updatedAt: now, updatedBy: S.me, ...(l.unitPrice ? { lastUnitPrice: l.unitPrice } : {}), ...(team && !same.team ? { team } : {}) });
+          same.qty = nq;
+          outLines.push({ ...l, itemId: same.id, merged: true }); merged++;
+        } else {
+          const ref = await db.collection("items").add({
+            name: l.name, category: l.category, group: l.group, spec: l.spec, qty: l.qty, unit: l.unit, location: l.location,
+            description: l.description || l.usage || "", team, minQty: 0, photo: locPhoto, ...(l.unitPrice ? { lastUnitPrice: l.unitPrice } : {}),
+            createdAt: now, createdBy: S.me, updatedAt: now, updatedBy: S.me,
+          });
+          S.items.push({ id: ref.id, name: l.name, spec: l.spec, qty: l.qty });
+          outLines.push({ ...l, itemId: ref.id }); added++;
+        }
+      }
+      let purchaseId = null;
+      if (team) {
+        const amount = Math.max(0, Math.floor(Number($("#bAmount").value) || 0)) || outLines.reduce((a, l) => a + (l.amount || 0), 0);
+        const ref = await db.collection("purchases").add({
+          team, date: $("#bDate").value, vendor: $("#bVendor").value.trim(), amount, memo: $("#bMemo").value.trim(),
+          receipts, lines: outLines, by, createdAt: now, createdBy: S.me, ...(S.bFromShip ? { shipId: S.bFromShip } : {}),
+        });
+        purchaseId = ref.id;
+      }
+      if (S.bFromShip) await db.doc("ships/" + S.bFromShip).update({ status: "입고완료", purchaseId, updatedAt: now }).catch(() => {});
+      $("#buyDlg").close();
+      toast(`새 품목 ${added}개 등록${merged ? `, 기존 품목 ${merged}개 수량 추가` : ""}${team ? " · 구매현황에 저장" : ""}`);
+    } catch (e) { writeFailed(e, "등록"); }
+    finally { btn.disabled = false; btn.textContent = "등록"; }
+  }
+  async function addReceipts(files) {
+    const pid = S.addRecFor; S.addRecFor = null;
+    const p = S.purchases.find((x) => x.id === pid); if (!p || !files.length) return;
+    toast("영수증을 올리는 중…");
+    const ids = [];
+    for (const f of files) { const id = await uploadPhoto(f); if (id) ids.push(id); }
+    if (!ids.length) return;
+    try { await db.doc("purchases/" + pid).update({ receipts: [...(p.receipts || []), ...ids] }); toast(`영수증 ${ids.length}장을 추가했습니다.`); }
+    catch (e) { writeFailed(e, "영수증 추가"); }
+  }
+
+  // ---------- 배송 ----------
+  function shipLineHtml(v = {}) {
+    return `<div class="mini-line">
+      <input data-s="name" list="nameList" maxlength="80" placeholder="품목 이름" aria-label="품목 이름" value="${esc(v.name || "")}">
+      <input data-s="qty" type="number" min="1" step="1" inputmode="numeric" aria-label="수량" value="${esc(v.qty || 1)}">
+      <select data-s="category" aria-label="분류">${CATS.map((c) => `<option ${c === (v.category || "부품") ? "selected" : ""}>${c}</option>`).join("")}</select>
+      <input data-s="unitPrice" type="number" min="0" step="1" inputmode="numeric" placeholder="단가(원)" aria-label="단가" value="${esc(v.unitPrice || "")}">
+      <button class="btn small ghost danger" type="button" data-rmsline aria-label="이 줄 지우기">×</button>
+    </div>`;
+  }
+  function openShip(s) {
+    S.shipEditing = s || null;
+    const me = savedMe();
+    $("#shipTitle").textContent = s ? "배송 편집" : "배송 등록";
+    $("#sMall").value = s?.mall || "쿠팡"; $("#sOrder").value = s?.orderNo || ""; $("#sTeam").value = s?.team ?? me.team ?? "";
+    $("#sStatus").value = s?.status || "주문완료"; $("#sOrdered").value = s?.orderedAt || today(); $("#sEta").value = s?.eta || "";
+    $("#sCourier").value = s?.courier || ""; $("#sTrack").value = s?.trackingNo || ""; $("#sMemo").value = s?.memo || "";
+    $("#sLines").innerHTML = (s?.items?.length ? s.items : [{}, {}]).map((v) => shipLineHtml(v)).join("");
+    $("#pasteBox").hidden = !sample; $("#sPaste").value = ""; $("#sAiNote").textContent = "";
+    $("#sDelBtn").hidden = !s; $("#sDelConfirm").hidden = true;
+    $("#shipDlg").showModal();
+  }
+  function readShipLines() {
+    return [...$("#sLines").querySelectorAll(".mini-line")].map((r) => {
+      const g = (f) => r.querySelector(`[data-s="${f}"]`).value.trim();
+      return { name: g("name"), qty: Math.max(1, Math.floor(Number(g("qty")) || 1)), category: g("category") || "부품", unitPrice: Math.max(0, Math.floor(Number(g("unitPrice")) || 0)) };
+    }).filter((l) => l.name);
+  }
+  async function saveShip(ev) {
+    ev.preventDefault();
+    if (!db || !S.canWrite) return;
+    const items = readShipLines();
+    if (!items.length && !$("#sOrder").value.trim()) { toast("주문번호나 품목 중 하나는 적어 주세요."); return; }
+    const me = savedMe(), now = Date.now();
+    const body = {
+      mall: $("#sMall").value, orderNo: $("#sOrder").value.trim(), team: $("#sTeam").value.trim(), status: $("#sStatus").value,
+      orderedAt: $("#sOrdered").value, eta: $("#sEta").value, courier: $("#sCourier").value.trim(), trackingNo: $("#sTrack").value.replace(/\s+/g, ""),
+      memo: $("#sMemo").value.trim(), items, updatedAt: now,
+    };
+    try {
+      if (S.shipEditing) await db.doc("ships/" + S.shipEditing.id).update(body);
+      else await db.collection("ships").add({ ...body, by: person(me.team, me.role, me.name), createdAt: now, createdBy: S.me });
+      $("#shipDlg").close(); toast("배송 정보를 저장했습니다.");
+    } catch (e) { writeFailed(e, "배송 저장"); }
+  }
+  async function shipAi() {
+    const text = $("#sPaste").value.trim(); if (!text || !sample) return;
+    const note = $("#sAiNote"), btn = $("#sAi"); btn.disabled = true; note.textContent = "읽는 중… (처음 한 번은 사용 허락 창이 뜹니다)";
+    try {
+      const r = await sample.json(
+        "아래는 쇼핑몰(한국미스미, 알리익스프레스, 쿠팡 등)의 주문·배송 안내 문구입니다. 적혀 있는 정보만 뽑아 JSON 하나로 답하세요. 없는 값은 빈 문자열.\n" +
+        '{"mall": "한국미스미" | "알리익스프레스" | "쿠팡" | "기타", "orderNo": "", "orderedAt": "YYYY-MM-DD", "eta": "YYYY-MM-DD", "courier": "택배사 이름", "trackingNo": "숫자·영문만", ' +
+        '"items": [{"name": "상품명(짧게)", "qty": 수량 숫자, "unitPrice": 원 단위 숫자 또는 0, "category": "부품" | "공구" | "소모품"}]}\n' +
+        "category는 볼트·너트·와셔·케이블타이 같은 소모성 체결재는 소모품, 렌치·드라이버·측정기는 공구, 그 밖의 장착 부품은 부품으로 고르세요.\n\n" + text.slice(0, 6000),
+        { modelTier: "quick" },
+      );
+      if (MALLS.includes(r?.mall)) $("#sMall").value = r.mall;
+      const set = (sel, v) => { if (v && !$(sel).value.trim()) $(sel).value = String(v); };
+      set("#sOrder", r?.orderNo); set("#sCourier", r?.courier); set("#sTrack", r?.trackingNo);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(r?.orderedAt || "")) $("#sOrdered").value = r.orderedAt;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(r?.eta || "")) $("#sEta").value = r.eta;
+      if (r?.trackingNo && $("#sStatus").value === "주문완료") $("#sStatus").value = "배송중";
+      const items = Array.isArray(r?.items) ? r.items.filter((x) => x && x.name).map((x) => ({ name: String(x.name).slice(0, 80), qty: Number(x.qty) || 1, unitPrice: Number(x.unitPrice) || 0, category: CATS.includes(x.category) ? x.category : "부품" })) : [];
+      if (items.length) $("#sLines").innerHTML = items.map((v) => shipLineHtml(v)).join("");
+      note.textContent = items.length || r?.orderNo ? "채웠습니다. 저장 전에 한 번 확인해 주세요." : "알아볼 수 있는 정보가 없었습니다.";
+    } catch (e) {
+      note.textContent = e?.code === "not_granted" || e?.code === "sampling_disabled" ? "이 화면에서는 AI를 쓸 수 없습니다. 직접 입력해 주세요." : e?.code === "rate_limited" ? "AI 요청이 많습니다. 잠시 후 다시 눌러 주세요." : "읽지 못했습니다. 직접 입력해 주세요.";
+    } finally { btn.disabled = false; }
+  }
+
+  // ---------- AI 질문 ----------
+  let aiCtl = null;
+  async function askAI(ev) {
+    ev.preventDefault();
+    const q = $("#aiQ").value.trim(); if (!q || !sample) return;
+    aiCtl?.abort(); aiCtl = new AbortController();
+    const out = $("#aiText"), btn = $("#aiBtn");
+    $("#aiAnswer").hidden = false; out.textContent = "목록을 살펴보는 중…"; btn.disabled = true;
+    const inv = S.items.slice(0, 400).map((it) => ({
+      id: it.id, 이름: it.name, 분류: it.category, 세부: it.group || "", 규격: it.spec || "", 팀: it.team || "", 수량: qtyOf(it), 단위: it.unit || "개",
+      위치: it.location || "", 최소: it.minQty || 0, 설명: descOf(it).slice(0, 60),
+      최근: it.lastUse ? `${it.lastUse.who} ${it.lastUse.action} (${ago(it.lastUse.at)})` : "",
+      지금쓰는사람: S.openRecs.filter((l) => l.itemId === it.id).map((l) => `${person(l.team, l.role, l.name)} ${l.qty}개 ${KIND[kindOf(l)].open}${l.spot ? `(${l.spot})` : ""}`).join(", "),
+      ...(it.category === "소모품" ? { 사용기록: S.consRecs.filter((r) => r.itemId === it.id).sort((a, b) => (b.borrowedAt || 0) - (a.borrowedAt || 0)).slice(0, 10).map((r) => `${fmtDT(r.borrowedAt, false)} ${person(r.team, r.role, r.name)} ${r.qty}개`).join("; ") } : {}),
+      ...(it.category === "공구" ? { 공구기록: S.toolRecs.filter((r) => r.itemId === it.id).sort((a, b) => (b.borrowedAt || 0) - (a.borrowedAt || 0)).slice(0, 5).map((r) => `${fmtDT(r.borrowedAt)} ${person(r.team, r.role, r.name)} 사용 시작` + (r.open ? " (사용 중)" : ` → ${fmtDT(r.returnedAt)} ${r.retLocation || ""}에 사용 완료`)).join("; ") } : {}),
+    }));
+    try {
+      const r = await sample.json(
+        "자작자동차 팀의 부품·공구 재고 목록(JSON)을 보고 질문에 답하세요. 공구는 '사용 중', 부품은 차량에 '장착됨'(부위 포함), 소모품은 사용하면 재고에서 줄어듭니다.\n" +
+        "목록에 있는 정보만 쓰고, 없는 것은 없다고 말하세요. 위치, 수량, 사람을 구체적으로 알려주세요.\n" +
+        '답은 JSON 하나: {"answer": "한국어 2~4문장", "ids": ["관련 품목 id", ...]}\n\n질문: ' + q + "\n\n재고 목록:\n" + JSON.stringify(inv),
+        { modelTier: "quick", signal: aiCtl.signal },
+      );
+      out.textContent = String(r?.answer || "답을 만들지 못했습니다.");
+      const ids = Array.isArray(r?.ids) ? r.ids.map(String).filter((id) => S.items.some((it) => it.id === id)) : [];
+      S.aiMatch = ids.length ? new Set(ids) : null; render();
+    } catch (e) {
+      if (e?.code === "cancelled") return;
+      if (e?.code === "not_granted" || e?.code === "sampling_disabled") { out.textContent = "이 화면에서는 AI 질문을 쓸 수 없습니다. 위 검색창을 이용해 주세요."; $("#aiForm").hidden = true; }
+      else if (e?.code === "rate_limited") out.textContent = "AI 요청이 많습니다. 잠시 후 다시 물어봐 주세요.";
+      else out.textContent = "답을 받지 못했습니다. 질문을 조금 바꿔서 다시 시도해 주세요.";
+    } finally { btn.disabled = false; }
+  }
+
+  // ---------- 이벤트 ----------
+  function selectTab(which) {
+    document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.tab === which)));
+    $("#viewInv").hidden = which !== "inv"; $("#viewBuy").hidden = which !== "buy"; $("#viewShip").hidden = which !== "ship";
+  }
+  document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => selectTab(t.dataset.tab)));
+  $("#q").addEventListener("input", (e) => { S.q = e.target.value; renderRows(); });
+  $("#teamFilter").addEventListener("change", (e) => { S.team = e.target.value; render(); });
+  $("#chips").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    if (b.dataset.cat) S.cat = b.dataset.cat;
+    if (b.dataset.flag === "low") S.onlyLow = !S.onlyLow;
+    if (b.dataset.flag === "open") S.onlyOpen = !S.onlyOpen;
+    render();
+  });
+  $("#rows").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const it = S.items.find((x) => x.id === b.closest(".row")?.dataset.id); if (!it) return;
+    if (b.dataset.act === "open") openItem(it);
+    if (b.dataset.act === "inc") bumpQty(it.id, 1);
+    if (b.dataset.act === "dec") bumpQty(it.id, -1);
+    if (b.dataset.act === "use") openUse(it);
+    if (b.dataset.act === "back") openReturnForItem(it.id);
+  });
+  $("#history").addEventListener("click", (e) => {
+    if (!e.target.closest("#histMore")) return;
+    S.histOpen = !S.histOpen; renderSide();
+    if (!S.histOpen) $("#history").closest(".panel").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
+  $("#consTable").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-consuse]"), ad = e.target.closest("[data-cadd]"), sb = e.target.closest("[data-csub]");
+    const find = (id) => S.items.find((x) => x.id === id);
+    if (b) { const it = find(b.dataset.consuse); if (it) openUse(it); }
+    if (ad) { const it = find(ad.dataset.cadd); if (it) openAdjust(it, 1); }
+    if (sb) { const it = find(sb.dataset.csub); if (it) openAdjust(it, -1); }
+  });
+  $("#toolTable").addEventListener("click", (e) => {
+    const st = e.target.closest("[data-tstart]"), dn = e.target.closest("[data-tdone]");
+    if (st) { const it = S.items.find((x) => x.id === st.dataset.tstart); if (it) openUse(it); }
+    if (dn) openReturnForItem(dn.dataset.tdone);
+  });
+  $("#rRec").addEventListener("change", (e) => openReturn(e.target.value, true));
+  $("#adjForm").addEventListener("submit", saveAdjust);
+  $("#recDelForm").addEventListener("submit", confirmRecDelete);
+  document.addEventListener("click", (e) => { const d = e.target.closest("[data-delrec]"); if (d) openRecDelete(d.dataset.delrec); });
+  $("#aQty").addEventListener("input", updateAdj);
+  document.addEventListener("click", (e) => {
+    const m = e.target.closest("[data-merge]"), y = e.target.closest("[data-merge-yes]"), n = e.target.closest("[data-merge-no]");
+    if (m) { const it = S.items.find((x) => x.id === m.dataset.merge); if (it) { S.mergeAsk = sameKey(it); render(); } }
+    if (n) { S.mergeAsk = null; render(); }
+    if (y) mergeTwins(y.dataset.mergeYes);
+  });
+  $("#partTable").addEventListener("click", (e) => {
+    const ad = e.target.closest("[data-padd]"), sb = e.target.closest("[data-psub]");
+    if (ad) { const it = S.items.find((x) => x.id === ad.dataset.padd); if (it) openAdjust(it, 1); }
+    if (sb) { const it = S.items.find((x) => x.id === sb.dataset.psub); if (it) openAdjust(it, -1); }
+    const on = e.target.closest("[data-pon]"), off = e.target.closest("[data-poff]");
+    if (on) { const it = S.items.find((x) => x.id === on.dataset.pon); if (it) openUse(it); }
+    if (off) openReturnForItem(off.dataset.poff);
+  });
+  $("#addBtn").addEventListener("click", () => openItem(null));
+  $("#buyBtn").addEventListener("click", () => openBuy());
+  $("#buyBtn2").addEventListener("click", () => openBuy());
+  document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => b.closest("dialog").close()));
+  $("#itemForm").addEventListener("submit", saveItem);
+  $("#fName").addEventListener("input", refreshSameItem);
+  $("#fSpec").addEventListener("input", refreshSameItem);
+  $("#useForm").addEventListener("submit", saveUse);
+  $("#retForm").addEventListener("submit", saveReturn);
+  $("#buyForm").addEventListener("submit", saveBuy);
+  $("#shipForm").addEventListener("submit", saveShip);
+  $("#delBtn").addEventListener("click", () => ($("#delConfirm").hidden = false));
+  $("#delNo").addEventListener("click", () => ($("#delConfirm").hidden = true));
+  $("#delYes").addEventListener("click", deleteItem);
+  $("#rQty").addEventListener("input", updateLost);
+  const photoInput = (inputSel, prevSel, key, alt) => $(inputSel).addEventListener("change", (e) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    S[key] = f; setPrev(prevSel, URL.createObjectURL(f), alt); e.target.value = "";
+  });
+  photoInput("#fPhoto", "#fPhotoPrev", "photoFile", "보관 위치");
+  photoInput("#uPhoto", "#uPhotoPrev", "usePhoto", "꺼낸 자리");
+  photoInput("#rPhoto", "#rPhotoPrev", "retPhoto", "둔 자리");
+  $("#bReceipt").addEventListener("change", (e) => { S.bReceipts.push(...e.target.files); e.target.value = ""; renderReceipts(); });
+  $("#bReceipts").addEventListener("click", (e) => { const b = e.target.closest("[data-rmrec]"); if (b) { S.bReceipts.splice(+b.dataset.rmrec, 1); renderReceipts(); } });
+  $("#bLocPhoto").addEventListener("change", (e) => { const f = e.target.files?.[0]; if (!f) return; S.bLocPhoto = f; $("#bLocPhotoHint").textContent = `선택됨: ${f.name}`; e.target.value = ""; });
+  $("#bAddLine").addEventListener("click", () => { $("#bLines").insertAdjacentHTML("beforeend", lineHtml()); $("#bLines .line-card:last-child input").focus(); });
+  $("#bLines").addEventListener("click", (e) => { const b = e.target.closest("[data-rmline]"); if (b && $("#bLines").children.length > 1) { b.closest(".line-card").remove(); updateSum(); } });
+  $("#bLines").addEventListener("input", (e) => { const c = e.target.closest(".line-card"); if (c && (e.target.dataset.f === "name" || e.target.dataset.f === "spec")) refreshMatch(c); updateSum(); });
+  $("#teamSum").addEventListener("click", (e) => { const b = e.target.closest("[data-bteam]"); if (b) { S.buyTeam = b.dataset.bteam; renderPurchases(); } });
+  document.querySelectorAll("[data-bview]").forEach((b) => b.addEventListener("click", () => { S.buyView = b.dataset.bview; renderPurchases(); }));
+  $("#purchases").addEventListener("click", async (e) => {
+    const d = e.target.closest("[data-pdel]"), y = e.target.closest("[data-pdel-yes]"), n = e.target.closest("[data-pdel-no]"), a = e.target.closest("[data-addrec]");
+    if (a) { S.addRecFor = a.dataset.addrec; $("#addRecInput").click(); }
+    if (d) { S.delPurchase = d.dataset.pdel; renderPurchases(); }
+    if (n) { S.delPurchase = null; renderPurchases(); }
+    if (y) { try { await db.doc("purchases/" + y.dataset.pdelYes).delete(); S.delPurchase = null; toast("구매 기록을 지웠습니다."); } catch (err) { writeFailed(err, "삭제"); } }
+  });
+  $("#addRecInput").addEventListener("change", (e) => { const fs = [...e.target.files]; e.target.value = ""; addReceipts(fs); });
+  $("#shipChips").addEventListener("click", (e) => { const b = e.target.closest("[data-sst]"); if (b) { S.shipStatus = b.dataset.sst; renderShips(); } });
+  $("#mallFilter").addEventListener("change", (e) => { S.shipMall = e.target.value; renderShips(); });
+  $("#shipAdd").addEventListener("click", () => openShip(null));
+  $("#sAddLine").addEventListener("click", () => $("#sLines").insertAdjacentHTML("beforeend", shipLineHtml()));
+  $("#sLines").addEventListener("click", (e) => { const b = e.target.closest("[data-rmsline]"); if (b && $("#sLines").children.length > 1) b.closest(".mini-line").remove(); });
+  $("#sAi").addEventListener("click", shipAi);
+  $("#sDelBtn").addEventListener("click", () => ($("#sDelConfirm").hidden = false));
+  $("#sDelNo").addEventListener("click", () => ($("#sDelConfirm").hidden = true));
+  $("#sDelYes").addEventListener("click", async () => { try { await db.doc("ships/" + S.shipEditing.id).delete(); $("#shipDlg").close(); toast("배송 기록을 지웠습니다."); } catch (e) { writeFailed(e, "삭제"); } });
+  $("#shipList").addEventListener("click", async (e) => {
+    const nx = e.target.closest("[data-snext]"), inb = e.target.closest("[data-sin]"), ed = e.target.closest("[data-sedit]");
+    if (ed) openShip(S.ships.find((s) => s.id === ed.dataset.sedit));
+    if (nx) {
+      const s = S.ships.find((x) => x.id === nx.dataset.snext); if (!s) return;
+      const next = STATUSES[STATUSES.indexOf(s.status) + 1];
+      try { await db.doc("ships/" + s.id).update({ status: next, updatedAt: Date.now() }); toast(`‘${s.mall}’ 주문을 ${next}(으)로 바꿨습니다.`); } catch (err) { writeFailed(err, "상태 변경"); }
+    }
+    if (inb) {
+      const s = S.ships.find((x) => x.id === inb.dataset.sin); if (!s) return;
+      openBuy({ shipId: s.id, team: s.team || "", vendor: s.mall, date: today(), memo: s.memo || (s.orderNo ? `주문번호 ${s.orderNo}` : ""),
+        lines: (s.items || []).map((it) => ({ name: it.name, qty: it.qty, category: it.category, unitPrice: it.unitPrice || "" })) });
+    }
+  });
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-photo]"); if (!b) return;
+    $("#photoBig").src = photoUrl(b.dataset.photo); $("#photoBig").alt = b.dataset.title; $("#photoTitle").textContent = b.dataset.title;
+    $("#photoDlg").showModal();
+  });
+  $("#aiForm").addEventListener("submit", askAI);
+  $("#aiClear").addEventListener("click", () => { aiCtl?.abort(); S.aiMatch = null; $("#aiAnswer").hidden = true; render(); });
+  $("#copyBuy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("#buyText").value); toast("구매 목록을 복사했습니다."); }
+    catch { const ta = $("#buyText"); ta.hidden = false; ta.focus(); ta.select(); toast("선택된 글을 복사해 주세요."); }
+  });
+
+  // ---------- 시작 ----------
+  render();
+  (async () => {
+    db = await use("db");
+    if (!db) { S.loaded.items = true; S.canWrite = false; banner("데이터 저장소에 연결하지 못했습니다. 인터넷 연결을 확인하고 새로고침해 주세요.", true); render(); return; }
+    user = await use("user");
+    S.me = user ? await user.id() : null;
+    const can = user ? await user.can("data.write") : null;
+    S.canWrite = can !== false;
+    if (!S.canWrite) banner("보기 권한으로 열었습니다. 수정하려면 이 페이지의 소유자에게 편집 권한을 요청하세요.");
+    if (S.canWrite) assets = await use("assets");
+    sample = await use("sample");
+    if (sample) $("#aiForm").hidden = false;
+    const err = (e) => {
+      if (e?.code === "revoked") { S.canWrite = false; banner("이 페이지에 대한 접근이 바뀌었습니다. 새로고침해 주세요.", true); }
+      else if (e?.code === "unavailable") banner("연결이 끊겼습니다. 새로고침해 주세요.", true);
+      render();
+    };
+    db.collection("items").limit(1000).onSnapshot((snap) => {
+      S.items = snap.docs.map((d) => ({ id: d.id, ...d.data() })); S.loaded.items = true;
+      if (S.aiMatch) S.aiMatch = new Set([...S.aiMatch].filter((id) => S.items.some((it) => it.id === id)));
+      render();
+    }, err);
+    db.collection("loans").where("open", "==", true).limit(500).onSnapshot((snap) => { S.openRecs = snap.docs.map((d) => ({ id: d.id, ...d.data() })); render(); }, err);
+    db.collection("loans").orderBy("borrowedAt", "desc").limit(50).onSnapshot((snap) => { S.recent = snap.docs.map((d) => ({ id: d.id, ...d.data() })); renderSide(); }, err);
+    db.collection("loans").where("kind", "==", "소모품").limit(1000).onSnapshot((snap) => { S.consRecs = snap.docs.map((d) => ({ id: d.id, ...d.data() })); renderConsumables(); }, err);
+    db.collection("loans").where("kind", "==", "공구").limit(1000).onSnapshot((snap) => { S.toolRecs = snap.docs.map((d) => ({ id: d.id, ...d.data() })); renderTools(); }, err);
+    db.collection("loans").where("kind", "==", "부품").limit(1000).onSnapshot((snap) => { S.partRecs = snap.docs.map((d) => ({ id: d.id, ...d.data() })); renderParts(); }, err);
+    db.collection("purchases").limit(500).onSnapshot((snap) => { S.purchases = snap.docs.map((d) => ({ id: d.id, ...d.data() })); renderPurchases(); renderChips(); }, err);
+    db.collection("ships").limit(500).onSnapshot((snap) => { S.ships = snap.docs.map((d) => ({ id: d.id, ...d.data() })); renderShips(); renderStats(); }, err);
+  })();
+})();
+</script>
+</body>
+</html>
