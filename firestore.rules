@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // GGOOLCHA STORAGE 보안 규칙
-// - 입장 코드를 맞힌 기기(members 명단)만 재고 데이터를 읽고 쓸 수 있다.
+// - 입장 코드를 맞힌 기기(members 명단)만 재고 데이터를 읽고 쓸 수 있다. 화면은 창을 열 때마다 코드를 다시 확인한다.
 // - 입장 코드는 config/club 문서의 code 값. 이 문서는 누구도 앱에서 읽거나 고칠 수 없고,
 //   Firebase 콘솔에서만 바꾼다.
 service cloud.firestore {
@@ -10,8 +10,13 @@ service cloud.firestore {
     function signedIn() {
       return request.auth != null;
     }
+    function clubCode() {
+      return get(/databases/$(database)/documents/config/club).data.code;
+    }
+    // 명단에 적힌 코드가 지금 입장 코드와 같아야 한다 (코드를 바꾸면 모두 다시 입력)
     function isMember() {
-      return signedIn() && exists(/databases/$(database)/documents/members/$(request.auth.uid));
+      return signedIn()
+        && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.code == clubCode();
     }
 
     // 입장 코드 보관함: 앱에서는 절대 못 읽음
@@ -22,10 +27,10 @@ service cloud.firestore {
     // 동아리 명단: 자기 기기 한 줄만, 코드가 맞을 때만 만들 수 있음
     match /members/{uid} {
       allow get: if signedIn() && request.auth.uid == uid;
-      allow create: if signedIn() && request.auth.uid == uid
+      allow create, update: if signedIn() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['code', 'joinedAt'])
-        && request.resource.data.code == get(/databases/$(database)/documents/config/club).data.code;
-      allow list, update, delete: if false;
+        && request.resource.data.code == clubCode();
+      allow list, delete: if false;
     }
 
     // 재고 데이터와 사진
