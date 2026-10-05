@@ -17,7 +17,11 @@ EV 자작차 동아리 '꿀차'의 부품·공구·소모품 재고와 사용 �
 
 | 파일 | 역할 |
 | --- | --- |
-| `index.html` | 화면 전체 (HTML·CSS·JavaScript 한 파일) + Firebase 연결부 |
+| `index.html` | 배포되는 페이지 (빌드 결과물, 직접 고치지 않음) |
+| `src/app.html` | 화면 원본 (HTML·CSS·JavaScript) |
+| `src/adapter.js` | 화면이 쓰는 저장소 연결을 Firebase로 이어 주는 연결부 |
+| `src/firebase-config.js` | Firebase 웹 앱 설정 값 |
+| `src/build.py` | 위 셋을 합쳐 `index.html`을 만드는 스크립트 (`python3 src/build.py`) |
 | `firestore.rules` | Firestore 보안 규칙 (입장 코드를 맞힌 기기만 접근) |
 
 - 호스팅: Vercel (GitHub 저장소에 올리면 자동 배포)
@@ -41,7 +45,7 @@ EV 자작차 동아리 '꿀차'의 부품·공구·소모품 재고와 사용 �
 5. 왼쪽 **빌드 → Authentication → 시작하기 → 로그인 방법** → **익명** → 사용 설정 → 저장
 6. 톱니바퀴 **프로젝트 설정 → 일반 → 내 앱**에서 웹 아이콘 `</>` → 앱 닉네임 입력 → **앱 등록**
    - 화면에 나오는 `firebaseConfig = { apiKey: ..., projectId: ..., ... }` 값을
-     `index.html` 위쪽의 `window.GGOOLCHA_FIREBASE = { ... }` 칸에 그대로 옮겨 적기
+     `src/firebase-config.js`의 `window.GGOOLCHA_FIREBASE = { ... }` 칸에 옮겨 적고 `python3 src/build.py` 실행
    - 이 값은 비밀번호가 아니라 '어느 Firebase 프로젝트인지' 알려 주는 주소라서 공개 저장소에 올라가도 됩니다.
      실제로 막아 주는 것은 보안 규칙과 입장 코드입니다.
 
@@ -61,7 +65,7 @@ EV 자작차 동아리 '꿀차'의 부품·공구·소모품 재고와 사용 �
 
 ## 운영 메모
 
-- **고칠 때**: GitHub에서 `index.html`을 새 파일로 바꿔 올리면 Vercel이 자동으로 다시 배포합니다.
+- **고칠 때**: `src/app.html`을 고치고 `python3 src/build.py`로 `index.html`을 다시 만든 뒤 GitHub에 올리면 Vercel이 자동으로 다시 배포합니다.
 - **입장 코드 바꾸기**: Firestore `config/club`의 `code` 값 수정. 이미 들어온 기기는 계속 쓸 수 있습니다.
 - **모든 기기 내보내기**: Firestore `members` 컬렉션의 문서를 지우면 다음 접속 때 코드를 다시 묻습니다.
 - **무료 한도(Spark 요금제)**: 저장 1GiB, 하루 읽기 5만 건·쓰기 2만 건. 동아리 규모에서는 충분합니다.
