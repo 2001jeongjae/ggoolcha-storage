@@ -4,9 +4,9 @@
 //  - db     → Firestore 컬렉션 items / loans / purchases / ships
 //  - assets → 사진을 줄여서 Firestore photos 컬렉션에 저장 (Storage 유료 요금제 없이)
 //  - user   → 기기별 익명 로그인 id
-//  - sample → 없음 (AI 기능은 이 버전에서 숨김)
-// 처음 들어오는 기기는 '동아리 입장 코드'를 맞혀야 members 명단에 올라가고,
-// 보안 규칙이 명단에 있는 기기만 읽고 쓰게 막는다.
+//  - sample → Firebase AI Logic(Gemini Developer API, 무료)로 주문 화면 사진 읽기
+// 탭을 새로 열 때마다 '동아리 입장 코드'를 다시 넣어야 하고, 보안 규칙은
+// members 명단에 적힌 코드가 지금 입장 코드와 같은 기기만 읽고 쓰게 막는다.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import {
@@ -14,10 +14,11 @@ import {
   collection, doc, query, where, orderBy, limit, onSnapshot,
   getDocs, getDoc, getDocFromCache, addDoc, setDoc, updateDoc, deleteDoc,
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js";
 
 const PX = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 const photoCache = new Map(), photoWait = new Set();
-let fs = null, uid = null;
+let fs = null, uid = null, fbApp = null;
 
 // ---------- 오류 코드: Firestore → 화면 코드가 아는 이름 ----------
 function mapErr(e) {
@@ -117,6 +118,51 @@ window.__ggPhoto = (id) => {
   return `${PX}#p=${id}`;
 };
 
+// ---------- AI: 주문 화면 사진 읽기 (Gemini) ----------
+// 화면 코드는 claude.ai의 sample.json(프롬프트, {images})와 같은 모양으로 부른다.
+const AI_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite"]; // 앞의 것이 안 되면 다음 것
+let aiModels = null;
+function getModels() {
+  if (!aiModels) {
+    const ai = getAI(fbApp, { backend: new GoogleAIBackend() });
+    aiModels = AI_MODELS.map((model) => getGenerativeModel(ai, { model, generationConfig: { responseMimeType: "application/json", temperature: 0 } }));
+  }
+  return aiModels;
+}
+const blobToPart = (b) => new Promise((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => res({ inlineData: { data: String(r.result).split(",")[1], mimeType: b.type || "image/jpeg" } });
+  r.onerror = rej; r.readAsDataURL(b);
+});
+function parseJson(t) {
+  const s = String(t || "").replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+  try { return JSON.parse(s); } catch {}
+  const a = s.indexOf("{"), z = s.lastIndexOf("}");
+  if (a >= 0 && z > a) return JSON.parse(s.slice(a, z + 1));
+  throw Object.assign(new Error("not json"), { code: "invalid_json" });
+}
+function mapAiErr(e) {
+  const m = String(e?.message || e || "");
+  const code = /429|quota|exhausted|rate/i.test(m) ? "rate_limited" : /403|PERMISSION|not been used|disabled|API key/i.test(m) ? "sampling_disabled" : "upstream_error";
+  return Object.assign(new Error(m), { code, cause: e });
+}
+const sample = Object.assign(async () => { throw Object.assign(new Error("text only"), { code: "invalid_request" }); }, {
+  photosOnly: true, // 재고 질문(이름이 담긴 기록을 보내는 기능)은 이 버전에서 쓰지 않는다
+  limits: async () => ({ maxPromptBytes: 262144, images: { maxCount: 6, maxInputBytes: 20000000, mediaTypes: ["image/jpeg", "image/png", "image/webp"] } }),
+  async json(input, opts = {}) {
+    const text = typeof input === "string" ? input : (input || []).map((m) => m.content).join("\n\n");
+    const imgs = opts.images ? (opts.images instanceof Blob ? [opts.images] : [...opts.images]) : [];
+    const parts = [text, ...(await Promise.all(imgs.map(blobToPart)))];
+    let last = null;
+    for (const model of getModels()) {
+      if (opts.signal?.aborted) throw Object.assign(new Error("cancelled"), { code: "cancelled" });
+      try { const r = await model.generateContent(parts); return parseJson(r.response.text()); }
+      catch (e) { last = e; if (e?.code === "invalid_json") break; }
+    }
+    throw last?.code === "invalid_json" ? last : mapAiErr(last);
+  },
+});
+
 const user = {
   id: async () => uid,
   can: async () => true,
@@ -141,7 +187,7 @@ const closeOverlay = () => document.getElementById("ggGate")?.remove();
 function askCode(msg = "") {
   return new Promise((resolve) => {
     const el = overlay(`
-      <p>꿀차 동아리원만 쓸 수 있습니다. 운영진에게 받은 <b>입장 코드</b>를 입력하세요.<br>한 번 들어오면 이 기기에서는 다시 묻지 않습니다.</p>
+      <p>꿀차 동아리원만 쓸 수 있습니다. 운영진에게 받은 <b>입장 코드</b>를 입력하세요.<br>창을 새로 열 때마다 다시 묻습니다.</p>
       <form id="ggForm" autocomplete="off">
         <label for="ggCode">입장 코드</label>
         <input id="ggCode" type="password" maxlength="60" required autofocus>
@@ -177,6 +223,7 @@ async function boot() {
     return NONE;
   }
   const app = initializeApp(cfg);
+  fbApp = app;
   const auth = getAuth(app);
   try { fs = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }
   catch { fs = initializeFirestore(app, {}); }
@@ -196,15 +243,14 @@ async function boot() {
   }
   uid = u.uid;
 
-  // 동아리 명단 확인 (오프라인이면 이 기기에 남긴 표시를 믿는다)
-  const KEY = "gg-member-" + uid;
-  let member = false;
-  try { member = (await getDoc(doc(fs, "members", uid))).exists(); }
-  catch { try { member = localStorage.getItem(KEY) === "1"; } catch {} }
-  if (!member) await askCode();
-  try { localStorage.setItem(KEY, "1"); } catch {}
+  // 입장 코드: 이 탭에서 이미 맞혔으면(새로고침) 넘어가고, 새 창·새 탭이면 다시 묻는다
+  const KEY = "gg-ok-" + uid;
+  let ok = false;
+  try { ok = sessionStorage.getItem(KEY) === "1"; } catch {}
+  if (!ok) await askCode();
+  try { sessionStorage.setItem(KEY, "1"); } catch {}
   closeOverlay();
-  return { db, user, assets, sample: null };
+  return { db, user, assets, sample };
 }
 
 boot().then(resolveReady, (e) => { fatal(`시작하지 못했습니다. (${e?.code || e?.message || e})`); resolveReady(NONE); });
