@@ -185,6 +185,7 @@ function overlay(html) {
 }
 const closeOverlay = () => document.getElementById("ggGate")?.remove();
 function askCode(msg = "") {
+  window.__ggBootHold?.(); // 코드를 입력하는 동안 '연결 실패' 시계가 끝나지 않게
   return new Promise((resolve) => {
     const el = overlay(`
       <p>동아리원만 쓸 수 있습니다. 운영진에게 받은 <b>입장 코드</b>를 입력하세요.<br>창을 새로 열 때마다 다시 묻습니다.</p>

@@ -58,8 +58,10 @@ waiter = """<script>
   var done = false, resolve;
   var boot = new Promise(function (r) { resolve = r; });
   window.__ggBootResolve = function (api) { if (!done) { done = true; resolve(api); } };
-  // 25초 안에 연결부가 뜨지 않으면(인터넷 끊김 등) 빈 저장소로 시작해서 안내 문구를 띄운다
-  setTimeout(function () { window.__ggBootResolve({}); }, 25000);
+  // 25초 안에 연결부가 뜨지 않으면(인터넷 끊김 등) 빈 저장소로 시작해서 안내 문구를 띄운다.
+  // 입장 코드 화면이 떠 있는 동안은 사람이 입력하는 시간이므로 이 시계를 멈춘다(__ggBootHold).
+  var timer = setTimeout(function () { window.__ggBootResolve({}); }, 25000);
+  window.__ggBootHold = function () { clearTimeout(timer); };
   window.claude = { use: function (name) { return boot.then(function (api) { return (api && api[name]) || null; }); } };
 })();
 </script>
