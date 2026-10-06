@@ -647,6 +647,14 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
       <div class="field full"><label for="fDesc">설명</label><textarea id="fDesc" maxlength="400" placeholder="예: 모터 너클 풀림방지 체결용"></textarea></div>
     </div>
     <p class="meta" id="fMeta"></p>
+    <div id="fWhoBox">
+      <h3 class="sec-title">기록자 <span style="font-weight:400">— 수량이 바뀌면 최근 기록에 이 이름으로 남습니다</span></h3>
+      <div class="person-fields">
+        <div class="field"><label for="fwTeam">소속 팀</label><input id="fwTeam" list="teamList" maxlength="30"></div>
+        <div class="field"><label for="fwRole">직책</label><input id="fwRole" list="roleList" maxlength="20"></div>
+        <div class="field"><label for="fwName">이름</label><input id="fwName" maxlength="20"></div>
+      </div>
+    </div>
     <div id="itemHistBox" hidden><h3 class="sec-title">사용 이력</h3><div class="hist" id="itemHist"></div></div>
     <div class="confirm" id="delConfirm" hidden>
       <span>이 품목을 삭제할까요? 사용 기록은 남습니다.</span>
@@ -1303,6 +1311,7 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
     $("#fSpec").value = it?.spec || ""; $("#fTeam").value = it?.team || (it ? "" : savedMe().team || "");
     $("#fQty").value = it ? qtyOf(it) : 1; $("#fUnit").value = it?.unit || "개"; $("#fLoc").value = it?.location || "";
     $("#fMin").value = it?.minQty ?? 0; $("#fDesc").value = it ? descOf(it) : "";
+    fillPerson("fw"); $("#fWhoBox").hidden = !S.canWrite;
     setPrev("#fPhotoPrev", it?.photo ? photoUrl(it.photo) : "", "보관 위치");
     $("#delBtn").hidden = !(it && S.canWrite); $("#delConfirm").hidden = true; $("#saveBtn").hidden = !S.canWrite;
     $("#itemForm").querySelectorAll("input, select, textarea").forEach((el) => (el.disabled = !S.canWrite));
@@ -1337,6 +1346,9 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
     ev.preventDefault();
     if (!S.canWrite || !db) return;
     const name = $("#fName").value.trim(); if (!name) { $("#fName").focus(); return; }
+    const newQty = Math.max(0, Math.floor(Number($("#fQty").value) || 0));
+    const qtyChanges = S.editing ? newQty !== qtyOf(S.editing) : newQty > 0;
+    const who0 = readPerson("fw", qtyChanges); if (!who0) return;
     const btn = $("#saveBtn"); btn.disabled = true; btn.textContent = "저장 중…";
     try {
       let photo = S.editing?.photo || null;
@@ -1347,16 +1359,25 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
         minQty: Math.max(0, Math.floor(Number($("#fMin").value) || 0)), description: $("#fDesc").value.trim(), photo,
         updatedAt: Date.now(), updatedBy: S.me,
       };
-      if (S.editing) { pendingQty.delete(S.editing.id); await db.doc("items/" + S.editing.id).update(body); toast("저장했습니다."); }
-      else {
+      const now = Date.now(), who = (p) => person(p.t, p.r, p.n);
+      const lastUse = (before, after, why, p) => ({ action: `${after > before ? "수량 추가" : "수량 제거"}(${why})`, who: who(p), at: now, qty: Math.abs(after - before) });
+      if (S.editing) {
+        const it = S.editing, before = qtyOf(it), after = body.qty;
+        pendingQty.delete(it.id);
+        await db.doc("items/" + it.id).update({ ...body, ...(after !== before ? { lastUse: lastUse(before, after, "편집", who0) } : {}) });
+        if (after !== before) await logAdjust({ ...it, ...body, id: it.id }, before, after, "편집에서 수량 수정", who0, now).catch(() => {});
+        toast(after !== before ? `저장했습니다. 수량 ${before} → ${after}${body.unit || "개"} (최근 기록에 남김)` : "저장했습니다.");
+      } else {
         const same = findSame(name, body.spec);
         if (same) {
-          const nq = qtyOf(same) + body.qty;
+          const before = qtyOf(same), nq = before + body.qty;
           pendingQty.delete(same.id);
-          await db.doc("items/" + same.id).update({ qty: nq, updatedAt: Date.now(), updatedBy: S.me, ...(photo && !same.photo ? { photo } : {}) });
+          await db.doc("items/" + same.id).update({ qty: nq, updatedAt: now, updatedBy: S.me, ...(photo && !same.photo ? { photo } : {}), ...(body.qty ? { lastUse: lastUse(before, nq, "같은 품목 등록", who0) } : {}) });
+          if (body.qty) await logAdjust(same, before, nq, "같은 품목을 다시 등록", who0, now).catch(() => {});
           toast(`이미 있는 ‘${same.name}’에 ${body.qty}${same.unit || "개"}를 더했습니다. 총 ${nq}${same.unit || "개"}`);
         } else {
-          await db.collection("items").add({ ...body, createdAt: Date.now(), createdBy: S.me });
+          const ref = await db.collection("items").add({ ...body, createdAt: now, createdBy: S.me, ...(body.qty ? { lastUse: lastUse(0, body.qty, "새 품목 등록", who0) } : {}) });
+          if (body.qty) await logAdjust({ id: ref.id, name, category: body.category }, 0, body.qty, "새 품목 등록", who0, now).catch(() => {});
           toast(`‘${name}’을(를) 등록했습니다.`);
         }
       }
@@ -1683,13 +1704,16 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
       const receipts = [...S.bReceiptIds];
       for (const f of S.bReceipts) { const id = await uploadPhoto(f); if (id) receipts.push(id); }
       const now = Date.now(), by = person(w.t, w.r, w.n);
+      const wp = w.n ? w : null, vendor = $("#bVendor").value.trim(), why = `구매·입고${vendor ? ` · ${vendor}` : ""}`.slice(0, 60);
       const outLines = []; let added = 0, merged = 0;
       for (const l of lines) {
         const same = findSame(l.name, l.spec);
         if (same) {
           const nq = qtyOf(same) + l.qty;
           pendingQty.delete(same.id);
+          const before = qtyOf(same);
           await db.doc("items/" + same.id).update({ qty: nq, updatedAt: now, updatedBy: S.me, ...(l.unitPrice ? { lastUnitPrice: l.unitPrice } : {}), ...(team && !same.team ? { team } : {}) });
+          await logAdjust(same, before, nq, why, wp, now).catch(() => {});
           same.qty = nq;
           outLines.push({ ...l, itemId: same.id, merged: true }); merged++;
         } else {
@@ -1698,6 +1722,7 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
             description: l.description || l.usage || "", team, minQty: 0, photo: locPhoto, ...(l.unitPrice ? { lastUnitPrice: l.unitPrice } : {}),
             createdAt: now, createdBy: S.me, updatedAt: now, updatedBy: S.me,
           });
+          await logAdjust({ id: ref.id, name: l.name, category: l.category }, 0, l.qty, `${why} (새 품목)`.slice(0, 60), wp, now).catch(() => {});
           S.items.push({ id: ref.id, name: l.name, spec: l.spec, qty: l.qty });
           outLines.push({ ...l, itemId: ref.id }); added++;
         }
