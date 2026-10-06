@@ -4,55 +4,68 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="꿀차 EV 자작차 동아리의 부품·공구·소모품 재고와 사용 기록">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231e6b45'/%3E%3Cpath d='M8 12h16v12H8zM11 8h10v4H11z' fill='none' stroke='white' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#1f252b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 1.5 36 10.75v18.5L20 38.5 4 29.25v-18.5z' fill='%23f6b21b'/%3E%3Cpath d='M20 9.6 29 14.8v10.4L20 30.4l-9-5.2V14.8z' fill='none' stroke='%231f252b' stroke-width='2.6' stroke-linejoin='round'/%3E%3Ccircle cx='20' cy='20' r='4' fill='%231f252b'/%3E%3C/svg%3E">
 <title>GGOOLCHA STORAGE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Saira+Condensed:wght@600;700;800&display=swap">
 <style>
 /* 레이아웃: 작업장 공구실 장부. 탭 = 재고 / 구매현황 / 배송현황. 재고 탭은 위 = 지금 사용 중 보드, 소모품 현황표, 아래 = 전체 품목 */
 :root {
-  --bg: #edf0ed;
-  --surface: #fbfcfb;
-  --surface-2: #f1f4f1;
-  --ink: #151a17;
-  --ink-2: #4a5650;
-  --muted: #6e7a74;
-  --line: rgba(21, 26, 23, 0.12);
-  --accent: #1e6b45;
-  --accent-ink: #ffffff;
-  --tag-bg: #f2e6c2;
-  --tag-ink: #5a4917;
-  --warn: #9a4a06;
-  --warn-bg: #fcefd6;
-  --info: #1d5fae;
-  --info-bg: #e2ecfa;
-  --danger: #b42318;
-  --danger-bg: #fde7e4;
-  --shadow: 0 10px 30px rgba(21, 26, 23, 0.16);
-  --font-display: "Do Hyeon", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  /* 꿀차 피트 개러지: 콘크리트 바닥, 흰 라벨, 흑연색 리버리, 꿀색 하나 */
+  --bg: #e9ecee;
+  --surface: #ffffff;
+  --surface-2: #f3f5f6;
+  --ink: #1b2026;
+  --ink-2: #47515b;
+  --muted: #6a747e;
+  --line: rgba(27, 32, 38, 0.12);
+  --honey: #f6b21b;
+  --band: #1f252b;
+  --graphite: #1f252b;
+  --accent: #946200;
+  --accent-ink: #1f252b;
+  --tag-bg: #efe6cf;
+  --tag-ink: #5b4a1f;
+  --warn: #c8372b;
+  --warn-bg: #fce8e5;
+  --info: #2e63c7;
+  --info-bg: #e4ecfb;
+  --danger: #c8372b;
+  --danger-bg: #fce8e5;
+  --c-part: #12806f;
+  --c-tool: #2e63c7;
+  --c-cons: #d9731a;
+  --focus: #2e63c7;
+  --shadow: 0 12px 32px rgba(20, 26, 32, 0.18);
+  --font-display: "Black Han Sans", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-wordmark: "Saira Condensed", "Black Han Sans", "Arial Narrow", sans-serif;
+  --font-num: "Saira Condensed", "IBM Plex Sans KR", sans-serif;
   --font-sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --font-mono: var(--font-sans); /* 날짜·시간·장소·숫자도 본문과 같은 글씨체 */
-  --r: 7px;
+  --r: 8px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0e1210; --surface: #161b18; --surface-2: #1c2320;
-    --ink: #e8eee9; --ink-2: #b2bdb6; --muted: #86928b; --line: rgba(255, 255, 255, 0.10);
-    --accent: #3fa673; --accent-ink: #07130c;
-    --tag-bg: #3a321b; --tag-ink: #ecd9a1;
-    --warn: #f1a64c; --warn-bg: #3a2a12; --info: #7cb0f0; --info-bg: #15263c;
-    --danger: #f2786d; --danger-bg: #3d1a17; --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --bg: #12161a; --surface: #1a1f24; --surface-2: #21272d;
+    --ink: #e9edf0; --ink-2: #b4bdc5; --muted: #87919a; --line: rgba(255, 255, 255, 0.10);
+    --band: #0c0f12; --accent: #f6b21b; --accent-ink: #1f252b;
+    --tag-bg: #3a3322; --tag-ink: #ebddb5;
+    --warn: #ff7a6b; --warn-bg: #3d1d1a; --info: #7faef5; --info-bg: #182844;
+    --danger: #ff7a6b; --danger-bg: #3d1d1a; --shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+    --c-part: #3fbfa9; --c-tool: #7faef5; --c-cons: #f0a050; --focus: #7faef5;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0e1210; --surface: #161b18; --surface-2: #1c2320;
-  --ink: #e8eee9; --ink-2: #b2bdb6; --muted: #86928b; --line: rgba(255, 255, 255, 0.10);
-  --accent: #3fa673; --accent-ink: #07130c;
-  --tag-bg: #3a321b; --tag-ink: #ecd9a1;
-  --warn: #f1a64c; --warn-bg: #3a2a12; --info: #7cb0f0; --info-bg: #15263c;
-  --danger: #f2786d; --danger-bg: #3d1a17; --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --bg: #12161a; --surface: #1a1f24; --surface-2: #21272d;
+  --ink: #e9edf0; --ink-2: #b4bdc5; --muted: #87919a; --line: rgba(255, 255, 255, 0.10);
+  --band: #0c0f12; --accent: #f6b21b; --accent-ink: #1f252b;
+  --tag-bg: #3a3322; --tag-ink: #ebddb5;
+  --warn: #ff7a6b; --warn-bg: #3d1d1a; --info: #7faef5; --info-bg: #182844;
+  --danger: #ff7a6b; --danger-bg: #3d1d1a; --shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --c-part: #3fbfa9; --c-tool: #7faef5; --c-cons: #f0a050; --focus: #7faef5;
   color-scheme: dark;
 }
 
@@ -65,7 +78,7 @@ body {
 }
 h1, h2, h3 { margin: 0; line-height: 1.25; text-wrap: balance; }
 button, input, select, textarea { font: inherit; color: inherit; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .wrap { max-width: 1200px; margin-inline: auto; }
 .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
@@ -270,7 +283,7 @@ dialog::backdrop { background: rgba(10, 14, 12, 0.45); }
 .hist-item .count { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
 .mini { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; border: 1px solid var(--line); cursor: zoom-in; display: block; }
 .mini-btn { all: unset; cursor: zoom-in; border-radius: 6px; }
-.mini-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mini-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 #photoDlg img { display: block; width: 100%; max-height: 70vh; object-fit: contain; background: var(--surface-2); border-radius: 6px; }
 
 .toast {
@@ -290,7 +303,7 @@ dialog::backdrop { background: rgba(10, 14, 12, 0.45); }
   margin-bottom: -1px; font-size: 15px;
 }
 .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
-.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
 .toolbar .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .toolbar select { padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); font-size: 13px; }
 .pill.use { background: var(--info-bg); color: var(--info); font-weight: 600; }
@@ -352,7 +365,7 @@ table.tbl tfoot td { font-weight: 600; background: var(--surface-2); }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
 .seg button { all: unset; cursor: pointer; padding: 5px 12px; font-size: 13px; color: var(--ink-2); }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
-.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.seg button:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .ship-list { display: grid; gap: 12px; margin-top: 12px; }
 .ship {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px;
@@ -405,16 +418,109 @@ table.tbl .loc { font-size: 13px; padding: 1px 8px 1px 13px; }
   .line-card { grid-template-columns: 1fr 1fr; }
   .line-card .span2, .line-card .name-f { grid-column: 1 / -1; }
 }
+
+/* ================= 꿀차 테마 =================
+   머리띠는 레이싱 리버리(흑연색 + 꿀색 사선 두 줄 + 벌집), 아래 본문은 조용한 부품 창고 라벨. */
+.livery {
+  position: relative; isolation: isolate; overflow: hidden;
+  margin: 0 -16px 0; padding: 22px 16px 0; color: #f2f4f6; background: var(--band);
+  border-bottom: 4px solid var(--honey);
+}
+.livery::before {
+  content: ""; position: absolute; inset: 0; z-index: -2;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22.52' height='39' viewBox='0 0 22.52 39'%3E%3Cpath fill='none' stroke='%23F6B21B' stroke-opacity='0.16' stroke-width='1' d='M0 -13 L11.26 -6.5 L11.26 6.5 L0 13 L-11.26 6.5 L-11.26 -6.5Z M22.52 -13 L33.77 -6.5 L33.77 6.5 L22.52 13 L11.26 6.5 L11.26 -6.5Z M11.26 6.5 L22.52 13 L22.52 26 L11.26 32.5 L0 26 L0 13Z M0 26 L11.26 32.5 L11.26 45.5 L0 52 L-11.26 45.5 L-11.26 32.5Z M22.52 26 L33.77 32.5 L33.77 45.5 L22.52 52 L11.26 45.5 L11.26 32.5Z'/%3E%3C/svg%3E"); background-size: 22.52px 39px;
+  -webkit-mask-image: linear-gradient(to left, #000 15%, transparent 78%); mask-image: linear-gradient(to left, #000 15%, transparent 78%);
+}
+.livery::after {
+  content: ""; position: absolute; top: -10px; bottom: -10px; left: clamp(560px, 56%, 780px); width: 86px; z-index: -1;
+  background: linear-gradient(90deg, var(--honey) 0 56%, transparent 56% 72%, var(--honey) 72% 100%);
+  transform: skewX(-20deg);
+}
+@media (min-width: 761px) and (max-width: 1150px) { .livery::after { display: none; } }
+.livery-in { max-width: 1200px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 24px; align-items: center; }
+.brand { display: flex; gap: 14px; align-items: center; min-width: 0; }
+.mark { width: 48px; height: 48px; flex: none; }
+.livery h1 { font-family: var(--font-wordmark); font-weight: 800; font-size: clamp(32px, 5.4vw, 52px); line-height: 0.95; letter-spacing: 0.01em; color: #fff; transform: skewX(-10deg); transform-origin: left bottom; }
+.livery .title p { margin: 7px 0 0; color: #b9c1c8; font-size: 14px; }
+.livery .top-actions { justify-content: flex-end; }
+.livery .btn { background: rgba(31, 37, 43, 0.85); border-color: rgba(255, 255, 255, 0.3); color: #fff; }
+.livery .btn:hover { border-color: #fff; }
+.livery .btn.primary { background: var(--honey); border-color: var(--honey); color: var(--graphite); }
+.cluster {
+  grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  background: #283038; border-radius: 10px 10px 0 0; padding: 0 6px; margin-top: 2px;
+}
+:root[data-theme="dark"] .cluster { background: #1a2027; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cluster { background: #1a2027; } }
+.cluster:empty { display: none; }
+.gauge { padding: 10px 12px 11px; display: grid; position: relative; }
+.gauge + .gauge::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 1px; background: rgba(255, 255, 255, 0.12); }
+.gauge span { font-size: 12.5px; color: #aeb7bf; white-space: nowrap; }
+.gauge b { font-family: var(--font-num); font-weight: 700; font-size: 30px; line-height: 1.05; color: #fff; }
+.gauge.alert b { color: #ff8a7a; }
+.gauge.alert span { color: #ffc2b9; }
+@media (max-width: 760px) {
+  .livery-in { grid-template-columns: minmax(0, 1fr); }
+  .livery .top-actions { justify-content: flex-start; }
+  .livery::after { left: auto; right: -34px; opacity: 0.75; }
+  .cluster { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .gauge:nth-child(4)::before { display: none; }
+  .gauge b { font-size: 24px; }
+}
+
+.tabs { margin-top: 14px; }
+.tab { font-weight: 600; font-size: 15px; border-bottom-width: 3px; }
+.tab[aria-selected="true"] { border-bottom-color: var(--honey); }
+
+/* 칸 제목: 벌집 한 칸 */
+.block-title h2 { font-family: var(--font-display); font-weight: 400; font-size: 21px; letter-spacing: 0.01em; display: flex; align-items: center; gap: 8px; }
+.block-title h2::before {
+  content: ""; width: 13px; height: 15px; flex: none; background: var(--honey);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+.dlg-head h2 { font-family: var(--font-display); }
+
+/* 버튼·칩 */
+.btn.primary { background: var(--honey); border-color: var(--honey); color: var(--graphite); font-weight: 700; }
+.btn.primary:hover { filter: brightness(1.05); }
+.chip[aria-pressed="true"] { background: var(--graphite); border-color: var(--graphite); color: #fff; }
+:root[data-theme="dark"] .chip[aria-pressed="true"] { background: var(--honey); border-color: var(--honey); color: var(--graphite); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chip[aria-pressed="true"] { background: var(--honey); border-color: var(--honey); color: var(--graphite); } }
+.chip[data-cat]::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 1px; background: var(--muted); }
+.chip[data-cat="all"]::before { display: none; }
+.chip[data-cat="부품"]::before { background: var(--c-part); }
+.chip[data-cat="공구"]::before { background: var(--c-tool); }
+.chip[data-cat="소모품"]::before { background: var(--c-cons); }
+
+/* 품목 줄 = 부품함 라벨: 왼쪽 띠가 분류, 부족하면 경고 줄무늬 */
+.list, .tbl-wrap, .panel, .toolbar { border-radius: 10px; }
+.list { overflow: hidden; }
+.row { position: relative; }
+.row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: transparent; }
+.row.cat-part::before { background: var(--c-part); }
+.row.cat-tool::before { background: var(--c-tool); }
+.row.cat-cons::before { background: var(--c-cons); }
+.row.low::before { width: 7px; background: repeating-linear-gradient(-45deg, var(--honey) 0 5px, var(--graphite) 5px 10px); }
+.row.low { background: color-mix(in srgb, var(--warn) 4%, var(--surface)); }
+.qty .val b { font-family: var(--font-num); font-size: 21px; font-weight: 700; }
+.kind.part { background: color-mix(in srgb, var(--c-part) 14%, transparent); color: var(--c-part); }
+.kind.tool { background: color-mix(in srgb, var(--c-tool) 14%, transparent); color: var(--c-tool); }
+.kind.cons { background: color-mix(in srgb, var(--c-cons) 16%, transparent); color: var(--c-cons); }
+.list-head, table.tbl th { letter-spacing: 0; }
+table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 15px; }
+
+/* 구매 필요: 경고 테이프 */
+#buyNeed:not(:empty) { border-top: 6px solid transparent; border-image: repeating-linear-gradient(-45deg, var(--honey) 0 8px, var(--graphite) 8px 16px) 6; padding-top: 10px; }
 </style>
 <style>
-#ggGate { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(3px); }
-#ggGate .gg-card { width: min(420px, 100%); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 22px; display: grid; gap: 12px; }
-#ggGate h2 { font-family: var(--font-display); font-weight: 400; font-size: 28px; letter-spacing: 0.5px; margin: 0; }
+#ggGate { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--band) 88%, transparent); backdrop-filter: blur(4px); }
+#ggGate .gg-card { width: min(420px, 100%); background: var(--surface); color: var(--ink); border-radius: 12px; border-top: 6px solid var(--honey); box-shadow: var(--shadow); padding: 22px; display: grid; gap: 12px; }
+#ggGate h2 { font-family: var(--font-wordmark); font-weight: 800; font-size: 34px; line-height: 1; letter-spacing: 0.01em; margin: 0; transform: skewX(-10deg); transform-origin: left bottom; }
 #ggGate p { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.6; }
 #ggGate form { display: grid; gap: 8px; }
 #ggGate label { font-size: 13px; font-weight: 600; color: var(--ink-2); }
 #ggGate input { font: inherit; padding: 10px 12px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); }
-#ggGate button { font: inherit; font-weight: 600; padding: 10px 14px; border-radius: var(--r); border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+#ggGate button { font: inherit; font-weight: 700; padding: 10px 14px; border-radius: var(--r); border: 1px solid var(--honey); background: var(--honey); color: var(--graphite); cursor: pointer; }
 #ggGate button:disabled { opacity: 0.6; cursor: wait; }
 #ggGate .gg-err { min-height: 1.4em; color: var(--danger); font-size: 13px; }
 </style>
@@ -448,7 +554,7 @@ window.GGOOLCHA_FIREBASE = {
 //  - db     → Firestore 컬렉션 items / loans / purchases / ships
 //  - assets → 사진을 줄여서 Firestore photos 컬렉션에 저장 (Storage 유료 요금제 없이)
 //  - user   → 기기별 익명 로그인 id
-//  - sample → Firebase AI Logic(Gemini Developer API, 무료)로 주문 화면 사진 읽기
+//  - sample → 우리 Vercel 서버(/api/read-order)가 Gemini(무료)로 주문 화면 사진을 읽어 준다
 // 탭을 새로 열 때마다 '동아리 입장 코드'를 다시 넣어야 하고, 보안 규칙은
 // members 명단에 적힌 코드가 지금 입장 코드와 같은 기기만 읽고 쓰게 막는다.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -458,11 +564,10 @@ import {
   collection, doc, query, where, orderBy, limit, onSnapshot,
   getDocs, getDoc, getDocFromCache, addDoc, setDoc, updateDoc, deleteDoc,
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
-import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js";
 
 const PX = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 const photoCache = new Map(), photoWait = new Set();
-let fs = null, uid = null, fbApp = null;
+let fs = null, uid = null, fbUser = null;
 
 // ---------- 오류 코드: Firestore → 화면 코드가 아는 이름 ----------
 function mapErr(e) {
@@ -562,22 +667,16 @@ window.__ggPhoto = (id) => {
   return `${PX}#p=${id}`;
 };
 
-// ---------- AI: 주문 화면 사진 읽기 (Gemini) ----------
+// ---------- AI: 주문 화면 사진 읽기 ----------
 // 화면 코드는 claude.ai의 sample.json(프롬프트, {images})와 같은 모양으로 부른다.
-const AI_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite"]; // 앞의 것이 안 되면 다음 것
-let aiModels = null;
-function getModels() {
-  if (!aiModels) {
-    const ai = getAI(fbApp, { backend: new GoogleAIBackend() });
-    aiModels = AI_MODELS.map((model) => getGenerativeModel(ai, { model, generationConfig: { responseMimeType: "application/json", temperature: 0 } }));
-  }
-  return aiModels;
+// 사진은 우리 서버(/api/read-order)로 보내고, 서버가 Gemini API 키로 읽은 결과만 돌려준다.
+// 서버는 입장 코드를 맞힌 기기의 로그인 토큰이 있어야 받아 준다.
+async function toJpegPart(b) {
+  // 서버 한 번에 보낼 수 있는 크기(약 4MB)를 넘지 않게 한 장씩 다시 줄인다
+  let url = await toJpegDataUrl(b, 1600, 0.82);
+  if (url.length > 900000) url = await toJpegDataUrl(b, 1280, 0.7);
+  return { data: url.split(",")[1], mimeType: "image/jpeg" };
 }
-const blobToPart = (b) => new Promise((res, rej) => {
-  const r = new FileReader();
-  r.onload = () => res({ inlineData: { data: String(r.result).split(",")[1], mimeType: b.type || "image/jpeg" } });
-  r.onerror = rej; r.readAsDataURL(b);
-});
 function parseJson(t) {
   const s = String(t || "").replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
   try { return JSON.parse(s); } catch {}
@@ -585,25 +684,32 @@ function parseJson(t) {
   if (a >= 0 && z > a) return JSON.parse(s.slice(a, z + 1));
   throw Object.assign(new Error("not json"), { code: "invalid_json" });
 }
-function mapAiErr(e) {
-  const m = String(e?.message || e || "");
-  const code = /429|quota|exhausted|rate/i.test(m) ? "rate_limited" : /403|PERMISSION|not been used|disabled|API key/i.test(m) ? "sampling_disabled" : "upstream_error";
-  return Object.assign(new Error(m), { code, cause: e });
-}
-const sample = Object.assign(async () => { throw Object.assign(new Error("text only"), { code: "invalid_request" }); }, {
+const aiError = (code, msg) => Object.assign(new Error(msg || code), { code });
+const sample = Object.assign(async () => { throw aiError("invalid_request", "text only"); }, {
   photosOnly: true, // 재고 질문(이름이 담긴 기록을 보내는 기능)은 이 버전에서 쓰지 않는다
   limits: async () => ({ maxPromptBytes: 262144, images: { maxCount: 6, maxInputBytes: 20000000, mediaTypes: ["image/jpeg", "image/png", "image/webp"] } }),
   async json(input, opts = {}) {
-    const text = typeof input === "string" ? input : (input || []).map((m) => m.content).join("\n\n");
+    const prompt = typeof input === "string" ? input : (input || []).map((m) => m.content).join("\n\n");
     const imgs = opts.images ? (opts.images instanceof Blob ? [opts.images] : [...opts.images]) : [];
-    const parts = [text, ...(await Promise.all(imgs.map(blobToPart)))];
-    let last = null;
-    for (const model of getModels()) {
-      if (opts.signal?.aborted) throw Object.assign(new Error("cancelled"), { code: "cancelled" });
-      try { const r = await model.generateContent(parts); return parseJson(r.response.text()); }
-      catch (e) { last = e; if (e?.code === "invalid_json") break; }
-    }
-    throw last?.code === "invalid_json" ? last : mapAiErr(last);
+    const images = [];
+    let total = 0;
+    for (const b of imgs.slice(0, 6)) { const part = await toJpegPart(b); total += part.data.length; if (total > 3800000) break; images.push(part); }
+    if (opts.signal?.aborted) throw aiError("cancelled");
+    let r;
+    try {
+      const token = await fbUser.getIdToken();
+      r = await fetch("/api/read-order", {
+        method: "POST", signal: opts.signal,
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ prompt, images }),
+      });
+    } catch (e) { throw aiError(opts.signal?.aborted ? "cancelled" : "upstream_error", String(e?.message || e)); }
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 429) throw aiError("rate_limited", j?.error);
+    if (r.status === 401 || r.status === 403) throw aiError("not_granted", j?.error);
+    if (r.status === 503 || j?.error === "no_key") throw aiError("sampling_disabled", j?.error);
+    if (!r.ok) throw aiError("upstream_error", j?.error || String(r.status));
+    return parseJson(j.text);
   },
 });
 
@@ -667,7 +773,6 @@ async function boot() {
     return NONE;
   }
   const app = initializeApp(cfg);
-  fbApp = app;
   const auth = getAuth(app);
   try { fs = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }
   catch { fs = initializeFirestore(app, {}); }
@@ -685,7 +790,7 @@ async function boot() {
       return NONE;
     }
   }
-  uid = u.uid;
+  uid = u.uid; fbUser = u;
 
   // 입장 코드: 이 탭에서 이미 맞혔으면(새로고침) 넘어가고, 새 창·새 탭이면 다시 묻는다
   const KEY = "gg-ok-" + uid;
@@ -716,18 +821,24 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
   <symbol id="i-truck" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" d="M2 6h12v10H2zM14 9h4l3 3v4h-7z"/><circle cx="6" cy="17.5" r="1.8" fill="var(--surface)" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="17.5" r="1.8" fill="var(--surface)" stroke="currentColor" stroke-width="1.8"/></symbol>
 </svg>
 
-<div class="wrap">
-  <header class="top">
-    <div class="title">
-      <h1>GGOOLCHA STORAGE</h1>
-      <p>누가 꺼냈고 어디에 두었는지, 꿀차의 부품과 공구를 한곳에서 기록합니다</p>
+<header class="livery">
+  <div class="livery-in">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 1.5 36 10.75v18.5L20 38.5 4 29.25v-18.5z" fill="var(--honey)"/><path d="M20 9.6 29 14.8v10.4L20 30.4l-9-5.2V14.8z" fill="none" stroke="#1f252b" stroke-width="2.6" stroke-linejoin="round"/><circle cx="20" cy="20" r="4" fill="#1f252b"/></svg>
+      <div class="title">
+        <h1>GGOOLCHA STORAGE</h1>
+        <p>누가 꺼냈고 어디에 두었는지, 꿀차의 부품과 공구를 한곳에서 기록합니다</p>
+      </div>
     </div>
     <div class="top-actions">
       <button class="btn" id="addBtn" type="button"><svg class="icon"><use href="#i-plus"/></svg>품목 1개 등록</button>
       <button class="btn primary" id="buyBtn" type="button"><svg class="icon"><use href="#i-receipt"/></svg>구매·입고 등록</button>
     </div>
-  </header>
+    <div class="cluster" id="stats" aria-label="재고 요약"></div>
+  </div>
+</header>
 
+<div class="wrap">
   <div class="banner" id="banner" hidden></div>
 
   <div class="tabs" role="tablist">
@@ -738,7 +849,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
 
   <!-- ============ 재고 ============ -->
   <section id="viewInv" role="tabpanel" aria-labelledby="tabInv">
-    <div class="block-title" style="margin-top:4px"><h2>전체 품목</h2><div class="stats" id="stats" style="margin:0"></div></div>
+    <div class="block-title" style="margin-top:4px"><h2>전체 품목</h2><p>품목을 누르면 사용 이력과 보관 위치 사진을 볼 수 있습니다</p></div>
     <section class="toolbar" aria-label="검색과 필터">
       <label class="search">
         <svg class="icon"><use href="#i-search"/></svg>
@@ -1199,7 +1310,8 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
     const parts = S.openRecs.filter((l) => kindOf(l) === "부품").reduce((a, l) => a + (Number(l.qty) || 0), 0);
     const shipping = S.ships.filter((s) => s.status === "배송중" || s.status === "주문완료").length;
     $("#stats").innerHTML = S.loaded.items
-      ? `<span>품목 <b>${S.items.length}</b></span><span class="${S.items.some(isLow) ? "warn" : ""}">부족 <b>${S.items.filter(isLow).length}</b></span><span>공구 사용 중 <b>${tools}</b></span><span>부품 장착 중 <b>${parts}</b></span><span>배송 대기 <b>${shipping}</b></span>`
+      ? [["품목", S.items.length], ["부족", S.items.filter(isLow).length, "alert"], ["공구 사용 중", tools], ["부품 장착 중", parts], ["배송 대기", shipping]]
+          .map(([label, n, kind]) => `<div class="gauge${kind && n ? " " + kind : ""}"><span>${label}</span><b>${n}</b></div>`).join("")
       : "";
   }
 
@@ -1280,7 +1392,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
     if (low) pills.push(`<span class="pill low"><svg class="icon"><use href="#i-warn"/></svg>부족 · 최소 ${esc(it.minQty)}</span>`);
     if (out) pills.push(`<span class="pill ${cat === "공구" ? "use" : "loan"}"><svg class="icon"><use href="#i-out"/></svg>${K.open} ${out}</span>`);
     const w = S.canWrite, avail = Math.max(qty - out, 0);
-    return `<div class="row${S.aiMatch && S.aiMatch.has(it.id) ? " match" : ""}" data-id="${esc(it.id)}">
+    return `<div class="row cat-${K.cls}${low ? " low" : ""}${S.aiMatch && S.aiMatch.has(it.id) ? " match" : ""}" data-id="${esc(it.id)}">
       <div class="thumb">${it.photo ? `<button type="button" class="mini-btn" data-photo="${esc(it.photo)}" data-title="${esc(it.name)} 보관 위치"><img src="${esc(photoUrl(it.photo))}" alt="${esc(it.name)} 보관 위치" loading="lazy" style="width:52px;height:52px;object-fit:cover;display:block"></button>` : `<svg class="icon"><use href="#i-tool"/></svg>`}</div>
       <div class="name"><button type="button" data-act="open">${esc(it.name)}</button>
         ${it.spec ? `<div class="spec">${esc(it.spec)}</div>` : ""}
@@ -1999,9 +2111,11 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
     '{"mall": "네이버" | "쿠팡" | "한국미스미" | "알리익스프레스" | "기타", "orderNo": "주문번호(따로 없으면 첫 상품주문번호)", "orderedAt": "주문일 YYYY-MM-DD", "eta": "도착 예정일 YYYY-MM-DD (예: \'9. 9.(수) 도착 예정\' → 그 날짜)", ' +
     '"courier": "택배사", "trackingNo": "운송장 번호(숫자·영문만)", "status": "주문완료" | "배송중" | "도착", "items": [' + ITEM_SHAPE + "]}" + ORDER_RULES();
 
-  async function buyAiPhotos(files) {
+  // onlyIfEmpty: '영수증 사진 추가'로 넣었을 때는 품목이 비어 있을 때만 자동으로 채운다
+  async function buyAiPhotos(files, onlyIfEmpty = false) {
     const blobs = await pickMasked(files); if (!blobs) return;
     S.bReceipts.push(...blobs); renderReceipts();
+    if (onlyIfEmpty && readLines().length) { $("#bAiNote").textContent = "영수증을 붙였습니다. 품목이 이미 있어 자동 입력은 하지 않았습니다."; return; }
     const note = $("#bAiNote"), pick = $("#bAiPick"); pick.disabled = true; note.textContent = "사진을 읽는 중… (10~30초)";
     try { fillBuyFromAi(await sample.json(BUY_PROMPT(), { images: await capImages(blobs) })); }
     catch (e) { note.textContent = AI_ERR(e); }
@@ -2224,7 +2338,11 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
   photoInput("#fPhoto", "#fPhotoPrev", "photoFile", "보관 위치");
   photoInput("#uPhoto", "#uPhotoPrev", "usePhoto", "꺼낸 자리");
   photoInput("#rPhoto", "#rPhotoPrev", "retPhoto", "둔 자리");
-  $("#bReceipt").addEventListener("change", (e) => { S.bReceipts.push(...e.target.files); e.target.value = ""; renderReceipts(); });
+  $("#bReceipt").addEventListener("change", (e) => {
+    const f = [...e.target.files]; e.target.value = "";
+    if (sample) buyAiPhotos(f, true); // 영수증도 개인정보를 가린 뒤 저장하고, 품목이 비어 있으면 자동으로 채운다
+    else { S.bReceipts.push(...f); renderReceipts(); }
+  });
   $("#bReceipts").addEventListener("click", (e) => {
     const b = e.target.closest("[data-rmrec]"), bi = e.target.closest("[data-rmrecid]");
     if (b) { S.bReceipts.splice(+b.dataset.rmrec, 1); renderReceipts(); }

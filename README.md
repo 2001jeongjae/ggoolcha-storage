@@ -23,11 +23,14 @@ EV 자작차 동아리 '꿀차'의 부품·공구·소모품 재고와 사용 �
 | `src/firebase-config.js` | Firebase 웹 앱 설정 값 |
 | `src/build.py` | 위 셋을 합쳐 `index.html`을 만드는 스크립트 (`python3 src/build.py`) |
 | `firestore.rules` | Firestore 보안 규칙 (입장 코드를 맞힌 기기만 접근) |
+| `api/read-order.js` | Vercel 서버 함수. 가린 주문 화면 사진을 Gemini로 읽어 구매·배송 칸을 채울 정보를 돌려줌 |
+| `vercel.json` | 서버 함수 실행 시간 설정 |
 
 - 호스팅: Vercel (GitHub 저장소에 올리면 자동 배포)
 - 데이터: Google Firebase Cloud Firestore (items · loans · purchases · ships · photos 컬렉션)
 - 로그인: Firebase 익명 로그인 + 동아리 입장 코드(`config/club` 문서, 앱에서는 읽을 수 없음)
 - 사진: 브라우저에서 1280px 이하 JPEG로 줄여 Firestore 문서에 저장
+- 사진 자동 입력: 개인정보(이름·전화번호·주소)를 화면에서 먼저 가린 뒤, `api/read-order` 서버가 Gemini API(무료)로 읽음. 키는 Vercel 환경 변수에만 있고, 서버는 입장 코드를 맞힌 기기의 요청만 받음
 
 ## 처음 설정하기
 
@@ -62,6 +65,12 @@ EV 자작차 동아리 '꿀차'의 부품·공구·소모품 재고와 사용 �
 3. Framework Preset은 **Other** 그대로, 다른 설정 없이 **Deploy**
 4. 1분쯤 뒤 `https://ggoolcha-storage.vercel.app` 같은 주소가 생깁니다. 이 주소와 입장 코드를 동아리원에게 나눠 주면 끝입니다.
 5. (권장) Firebase **Authentication → 설정 → 승인된 도메인 → 도메인 추가**에 위 주소의 도메인(`ggoolcha-storage.vercel.app`)을 넣어 둡니다.
+
+### 4. Gemini 키 (사진 자동 입력용)
+
+1. <https://aistudio.google.com/apikey> → **API 키 만들기** → 프로젝트 `ggoolcha-storage` 선택 → 생성된 키 복사 (무료, 카드 등록 없음)
+2. Vercel 프로젝트 → **Settings → Environment Variables** → 이름 `GEMINI_API_KEY`, 값에 키 붙여 넣기 → Save
+3. Vercel **Deployments**에서 최신 배포의 ⋯ → **Redeploy** (환경 변수는 다시 배포해야 적용됨)
 
 ## 운영 메모
 
