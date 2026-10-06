@@ -187,7 +187,7 @@ const closeOverlay = () => document.getElementById("ggGate")?.remove();
 function askCode(msg = "") {
   return new Promise((resolve) => {
     const el = overlay(`
-      <p>꿀차 동아리원만 쓸 수 있습니다. 운영진에게 받은 <b>입장 코드</b>를 입력하세요.<br>창을 새로 열 때마다 다시 묻습니다.</p>
+      <p>동아리원만 쓸 수 있습니다. 운영진에게 받은 <b>입장 코드</b>를 입력하세요.<br>창을 새로 열 때마다 다시 묻습니다.</p>
       <form id="ggForm" autocomplete="off">
         <label for="ggCode">입장 코드</label>
         <input id="ggCode" type="password" maxlength="60" required autofocus>
