@@ -276,7 +276,11 @@ dialog::backdrop { background: rgba(10, 14, 12, 0.45); }
 .mini { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; border: 1px solid var(--line); cursor: zoom-in; display: block; }
 .mini-btn { all: unset; cursor: zoom-in; border-radius: 6px; }
 .mini-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-#photoDlg img { display: block; width: 100%; max-height: 70vh; object-fit: contain; background: var(--surface-2); border-radius: 6px; }
+#photoDlg { width: min(920px, calc(100vw - 24px)); }
+#photoDlg .pv-box { max-height: calc(100vh - 210px); overflow: auto; background: var(--surface-2); border-radius: 6px; overscroll-behavior: contain; }
+#photoBig { display: block; width: 100%; height: auto; cursor: zoom-in; }
+#photoBig.zoom { width: 220%; max-width: none; cursor: zoom-out; }
+#photoDlg .pv-nav { display: flex; align-items: center; justify-content: center; gap: 12px; }
 
 .toast {
   position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
@@ -871,7 +875,9 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
 <dialog id="photoDlg" aria-label="사진 크게 보기">
   <div class="dlg">
     <div class="dlg-head"><h2 id="photoTitle" style="font-size:20px">사진</h2><button class="btn small ghost" type="button" data-close>닫기</button></div>
-    <img id="photoBig" alt="">
+    <div class="pv-box" id="photoBox"><img id="photoBig" alt=""></div>
+    <div class="pv-nav" id="photoNav" hidden><button class="btn small" type="button" id="photoPrev">‹ 이전</button><span class="hint" id="photoCount"></span><button class="btn small" type="button" id="photoNext">다음 ›</button></div>
+    <p class="hint" style="margin:0;text-align:center">사진을 누르면 더 크게 보고, 한 번 더 누르면 원래 크기로 돌아옵니다.</p>
   </div>
 </dialog>
 
@@ -1202,7 +1208,7 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
             <td class="num">${Number(ln.unitPrice) > 0 ? won(ln.unitPrice) : "–"}</td>
             <td class="num">${amt != null ? won(amt) : "–"}</td>
             <td>${esc(ln.purpose || "")}</td><td>${esc(ln.usage || "")}</td><td>${esc(p.vendor || "")}</td>
-            <td>${(p.receipts || []).length ? mini(p.receipts[0], `${p.team} ${p.date || ""} 영수증`) + ((p.receipts || []).length > 1 ? `<span class="hint"> +${p.receipts.length - 1}</span>` : "") : `<span class="hint">없음</span>`}</td></tr>`;
+            <td>${(p.receipts || []).length ? `<span data-gallery="${esc(p.receipts.join(","))}" data-gtitle="${esc(`${p.team} ${p.date || ""} 영수증`)}" style="display:inline-flex;align-items:center;gap:4px">${mini(p.receipts[0], `${p.team} ${p.date || ""} 영수증 1`)}${p.receipts.length > 1 ? `<span class="hint">+${p.receipts.length - 1}</span>` : ""}</span>` : `<span class="hint">없음</span>`}</td></tr>`;
         }).join("") + `</tbody><tfoot><tr><td colspan="6">합계 (단가를 적은 품목)</td><td class="num">${won(sum)}</td><td colspan="4"></td></tr></tfoot>`;
     }
 
@@ -1261,7 +1267,7 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
             ${s.trackingNo ? `<span>${esc(s.courier || "택배")} <span class="mono">${esc(s.trackingNo)}</span></span>` : `<span class="hint">운송장 번호 미입력</span>`}
           </div>
           ${s.memo ? `<div class="desc">${esc(s.memo)}</div>` : ""}
-          ${(s.receipts || []).length ? `<div class="receipts" style="margin-top:6px">${s.receipts.slice(0, 4).map((r, i) => mini(r, `${s.mall} 주문 화면 ${i + 1}`)).join("")}${s.receipts.length > 4 ? `<span class="hint">+${s.receipts.length - 4}</span>` : ""}</div>` : ""}
+          ${(s.receipts || []).length ? `<div class="receipts" style="margin-top:6px" data-gallery="${esc(s.receipts.join(","))}" data-gtitle="${esc(`${s.mall} 주문 화면`)}">${s.receipts.slice(0, 4).map((r, i) => mini(r, `${s.mall} 주문 화면 ${i + 1}`)).join("")}${s.receipts.length > 4 ? `<span class="hint">+${s.receipts.length - 4}</span>` : ""}</div>` : ""}
           <div class="meta">${s.by ? `등록: ${esc(s.by)} · ` : ""}수정 ${ago(s.updatedAt || s.createdAt)}</div>
         </div>
         <div class="s-actions">
@@ -1683,9 +1689,11 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
   }
   function updateSum() { const s = readLines().reduce((a, l) => a + (l.amount || 0), 0); $("#bSum").textContent = s ? `품목 금액 합계 ${won(s)}` : ""; }
   const rmBtn = (attr, i, label) => `<button type="button" class="btn small ghost" ${attr}="${i}" style="position:absolute;top:-8px;right:-8px;padding:0 6px" aria-label="${label} 빼기">×</button>`;
+  const BLOB_URLS = new WeakMap();
+  const blobUrl = (f) => { let u = BLOB_URLS.get(f); if (!u) { u = URL.createObjectURL(f); BLOB_URLS.set(f, u); } return u; };
   function receiptThumbs(ids, files, idAttr, fileAttr, label) {
     return ids.map((id, i) => `<span style="position:relative">${mini(id, `${label} ${i + 1}`)}${rmBtn(idAttr, i, `${label} ${i + 1}`)}</span>`).join("") +
-      files.map((f, i) => `<span style="position:relative"><img class="mini" src="${esc(URL.createObjectURL(f))}" alt="${label} ${ids.length + i + 1}">${rmBtn(fileAttr, i, `${label} ${ids.length + i + 1}`)}</span>`).join("");
+      files.map((f, i) => `<span style="position:relative"><button type="button" class="mini-btn" data-src="${esc(blobUrl(f))}" data-title="${label} ${ids.length + i + 1}"><img class="mini" src="${esc(blobUrl(f))}" alt="${label} ${ids.length + i + 1}"></button>${rmBtn(fileAttr, i, `${label} ${ids.length + i + 1}`)}</span>`).join("");
   }
   function renderReceipts() { $("#bReceipts").innerHTML = receiptThumbs(S.bReceiptIds, S.bReceipts, "data-rmrecid", "data-rmrec", "영수증"); }
   function renderShipReceipts() { $("#sReceipts").innerHTML = receiptThumbs(S.sReceiptIds, S.sReceipts, "data-rmsrecid", "data-rmsrec", "주문 화면"); }
@@ -2547,11 +2555,41 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
         lines: (s.items || []).map((it) => ({ name: it.name, qty: it.qty, category: it.category, unitPrice: it.unitPrice || "" })) });
     }
   });
+  // ---------- 사진 크게 보기 (같은 묶음의 사진은 이전·다음으로 넘겨 봄) ----------
+  const PV = { list: [], i: 0 };
+  function showPhoto(i) {
+    const p = PV.list[i]; if (!p) return; PV.i = i;
+    const img = $("#photoBig"); img.classList.remove("zoom");
+    img.src = p.src; img.alt = p.title; $("#photoTitle").textContent = p.title;
+    $("#photoBox").scrollTo(0, 0);
+    $("#photoNav").hidden = PV.list.length < 2; $("#photoCount").textContent = `${i + 1} / ${PV.list.length}`;
+    $("#photoPrev").disabled = i === 0; $("#photoNext").disabled = i === PV.list.length - 1;
+  }
   document.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-photo]"); if (!b) return;
-    $("#photoBig").src = photoUrl(b.dataset.photo); $("#photoBig").alt = b.dataset.title; $("#photoTitle").textContent = b.dataset.title;
-    $("#photoDlg").showModal();
+    const b = e.target.closest("[data-photo], [data-src]"); if (!b || b.closest("#photoDlg")) return;
+    const gal = b.closest("[data-gallery]");
+    if (gal) {
+      const ids = gal.dataset.gallery.split(",").filter(Boolean), t = gal.dataset.gtitle || "사진";
+      PV.list = ids.map((id, k) => ({ src: photoUrl(id), title: `${t} ${k + 1}` }));
+      PV.i = Math.max(0, ids.indexOf(b.dataset.photo));
+    } else {
+      const box = b.closest(".receipts"), els = box ? [...box.querySelectorAll("[data-photo], [data-src]")] : [b];
+      PV.list = els.map((el) => ({ src: el.dataset.photo ? photoUrl(el.dataset.photo) : el.dataset.src, title: el.dataset.title || "사진" }));
+      PV.i = Math.max(0, els.indexOf(b));
+    }
+    showPhoto(PV.i);
+    if (!$("#photoDlg").open) $("#photoDlg").showModal();
   });
+  $("#photoBig").addEventListener("click", (e) => {
+    const img = e.currentTarget, box = $("#photoBox"), r = img.getBoundingClientRect();
+    const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+    img.classList.toggle("zoom");
+    // 누른 곳이 화면 가운데 오도록
+    requestAnimationFrame(() => { box.scrollLeft = fx * img.offsetWidth - box.clientWidth / 2; box.scrollTop = fy * img.offsetHeight - box.clientHeight / 2; });
+  });
+  $("#photoPrev").addEventListener("click", () => showPhoto(PV.i - 1));
+  $("#photoNext").addEventListener("click", () => showPhoto(PV.i + 1));
+  $("#photoDlg").addEventListener("keydown", (e) => { if (e.key === "ArrowLeft") showPhoto(PV.i - 1); if (e.key === "ArrowRight") showPhoto(PV.i + 1); });
   $("#aiForm").addEventListener("submit", askAI);
   $("#aiClear").addEventListener("click", () => { aiCtl?.abort(); S.aiMatch = null; $("#aiAnswer").hidden = true; render(); });
   $("#copyBuy").addEventListener("click", async () => {
