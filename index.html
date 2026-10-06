@@ -1436,14 +1436,15 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
   function recHtml(l, withName = true) {
     if (l.id) recMap.set(l.id, l);
     if (l.kind === "조정") {
-      const head = `<span class="kind adj">${l.dir > 0 ? "수량 추가" : "수량 제거"}</span>`;
+      const used = l.use && l.dir < 0;
+      const head = used ? `<span class="kind ${(KIND[l.itemCat] || KIND.부품).cls}">사용</span>` : `<span class="kind adj">${l.dir > 0 ? "수량 추가" : "수량 제거"}</span>`;
       return `<div class="hist-item" data-rec="${esc(l.id || "")}"><div>${withName ? `<div style="font-weight:600">${head}${esc(l.itemName)}</div>` : `<div>${head}</div>`}
-        <div class="line"><b>${esc(person(l.team, l.role, l.name) || "기록 없음")}</b> ${l.dir > 0 ? "+" : "−"}${esc(l.qty)}개 · 총 ${esc(l.before)} → ${esc(l.after)}개 · ${fmtDT(l.borrowedAt)}${l.note && !AUTO_NOTE.test(l.note) ? ` · ${esc(l.note)}` : ""}</div></div><div class="hist-side">${delBtn(l)}</div></div>`;
+        <div class="line"><b>${esc(person(l.team, l.role, l.name) || "기록 없음")}</b> ${used ? "" : l.dir > 0 ? "+" : "−"}${esc(l.qty)}개${used ? " 사용" : ""} · 총 ${esc(l.before)} → ${esc(l.after)}개 · ${fmtDT(l.borrowedAt)}${l.note && !AUTO_NOTE.test(l.note) ? ` · ${esc(l.note)}` : ""}</div></div><div class="hist-side">${delBtn(l)}</div></div>`;
     }
     const k = kindOf(l), K = KIND[k] || KIND.부품;
     const head = `<span class="kind ${K.cls}">${esc(k === "소모품" ? "사용" : k === "공구" ? "공구" : "장착")}</span>`;
     const from = l.fromLocation ? ` ← <span class="loc">${esc(l.fromLocation)}</span>` : "";
-    const out = `<b>${esc(person(l.team, l.role, l.name) || "기록 없음")}</b> ${esc(l.qty)}개 ${k === "소모품" ? "사용" : K.start}${l.spot ? ` (${esc(l.spot)})` : ""} · ${fmtDT(l.borrowedAt, k !== "소모품")}${k === "부품" ? "" : from}${l.note ? ` · ${esc(l.note)}` : ""}`;
+    const out = `<b>${esc(person(l.team, l.role, l.name) || "기록 없음")}</b> ${esc(l.qty)}개 ${k === "소모품" ? "사용" : K.start}${l.spot ? ` (${esc(l.spot)})` : ""}${l.before != null && l.after != null ? ` · 총 ${esc(l.before)} → ${esc(l.after)}개` : ""} · ${fmtDT(l.borrowedAt, k !== "소모품")}${k === "부품" ? "" : from}${l.note ? ` · ${esc(l.note)}` : ""}`;
     let back = "";
     if (k !== "소모품") {
       if (l.open) back = `<div class="line">아직 ${K.open}</div>`;
@@ -1598,8 +1599,10 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
     const timer = setTimeout(async () => {
       const cur = pendingQty.get(id);
       try {
-        await db.doc("items/" + id).update({ qty: cur.qty, updatedAt: Date.now(), updatedBy: S.me });
-        if (cur.qty !== cur.base) await logAdjust(it, cur.base, cur.qty, "").catch(() => {});
+        const now = Date.now(), me = savedMe();
+        const used = cur.qty < cur.base ? { lastUse: { action: "사용", who: person(me.team, me.role, me.name) || "팀원", at: now, qty: cur.base - cur.qty } } : {};
+        await db.doc("items/" + id).update({ qty: cur.qty, updatedAt: now, updatedBy: S.me, ...used });
+        if (cur.qty !== cur.base) await logChange(it, cur.base, cur.qty, null, now).catch(() => {});
       } catch (e) { writeFailed(e, "수량 저장"); }
       if (pendingQty.get(id) === cur) pendingQty.delete(id);
       render();
@@ -1665,12 +1668,12 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
         updatedAt: Date.now(), updatedBy: S.me,
       };
       const now = Date.now(), who = (p) => person(p.t, p.r, p.n);
-      const lastUse = (before, after, _why, p) => ({ action: after > before ? "수량 추가" : "수량 제거", who: who(p), at: now, qty: Math.abs(after - before) });
+      const lastUse = (before, after, _why, p) => ({ action: after > before ? "수량 추가" : "사용", who: who(p), at: now, qty: Math.abs(after - before) });
       if (S.editing) {
         const it = S.editing, before = qtyOf(it), after = body.qty;
         pendingQty.delete(it.id);
         await db.doc("items/" + it.id).update({ ...body, ...(after !== before ? { lastUse: lastUse(before, after, "편집", who0) } : {}) });
-        if (after !== before) await logAdjust({ ...it, ...body, id: it.id }, before, after, "", who0, now).catch(() => {});
+        if (after !== before) await logChange({ ...it, ...body, id: it.id }, before, after, who0, now).catch(() => {});
         toast(after !== before ? `저장했습니다. 수량 ${before} → ${after}${body.unit || "개"} (최근 기록에 남김)` : "저장했습니다.");
       } else {
         const same = findSame(name, body.spec);
@@ -1762,7 +1765,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
     const l = recMap.get(id); if (!l) return;
     S.delRec = l;
     const k = l.kind === "조정" ? "조정" : kindOf(l), K = KIND[k] || KIND.부품;
-    const what = k === "조정" ? `${l.dir > 0 ? "수량 추가" : "수량 제거"} ${l.dir > 0 ? "+" : "−"}${l.qty}개`
+    const what = k === "조정" ? (l.use && l.dir < 0 ? `사용 ${l.qty}개` : `${l.dir > 0 ? "수량 추가" : "수량 제거"} ${l.dir > 0 ? "+" : "−"}${l.qty}개`)
       : k === "소모품" ? `사용 ${l.qty}개` : `${K.start} ${l.qty}개${l.open ? ` (아직 ${K.open})` : ` → ${K.endDone}`}`;
     $("#rdWhat").innerHTML = `<b>${esc(l.itemName)}</b> · ${esc(what)}<div class="hint" style="margin-top:2px">${esc(person(l.team, l.role, l.name) || "기록 없음")} · ${fmtDT(l.borrowedAt)}${l.note && !AUTO_NOTE.test(l.note) ? ` · ${esc(l.note)}` : ""}</div>`;
     const ef = recEffect(l), unit = ef.it?.unit || "개";
@@ -1913,12 +1916,24 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
   }
 
   // 수량을 바꾼 일도 최근 기록에 남긴다 (kind: "조정", 열린 상태 아님)
-  async function logAdjust(it, before, after, why, p, at) {
+  async function logAdjust(it, before, after, why, p, at, extra = {}) {
     const me = p || savedMe();
     const t = p ? p.t : me.team, r = p ? p.r : me.role, n = p ? p.n : me.name;
     await db.collection("loans").add({
       kind: "조정", itemCat: it.category || "부품", itemId: it.id, itemName: it.name, qty: Math.abs(after - before), dir: after > before ? 1 : -1,
-      before, after, note: why || "", team: t || "", role: r || "", name: n || "", borrower: S.me, borrowedAt: at || Date.now(), open: false,
+      before, after, note: why || "", team: t || "", role: r || "", name: n || "", borrower: S.me, borrowedAt: at || Date.now(), open: false, ...extra,
+    });
+  }
+  // − 버튼이나 편집으로 수량을 줄이면 '사용'으로 남긴다.
+  // 소모품은 '사용' 기록과 똑같이 남겨서 소모품 현황의 최근 사용에도 보이게 한다.
+  async function logChange(it, before, after, p, at) {
+    if (after >= before) return logAdjust(it, before, after, "", p, at);
+    if ((it.category || "부품") !== "소모품") return logAdjust(it, before, after, "", p, at, { use: true });
+    const me = p || savedMe(), n = before - after;
+    await db.collection("loans").add({
+      kind: "소모품", itemId: it.id, itemName: it.name, qty: n, consumedQty: n, before, after, note: "",
+      team: (p ? p.t : me.team) || "", role: (p ? p.r : me.role) || "", name: (p ? p.n : me.name) || "",
+      borrower: S.me, borrowedAt: at || Date.now(), open: false, fromLocation: it.location || "",
     });
   }
 
