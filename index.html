@@ -573,8 +573,10 @@ window.GGOOLCHA_FIREBASE = {
   var done = false, resolve;
   var boot = new Promise(function (r) { resolve = r; });
   window.__ggBootResolve = function (api) { if (!done) { done = true; resolve(api); } };
-  // 25초 안에 연결부가 뜨지 않으면(인터넷 끊김 등) 빈 저장소로 시작해서 안내 문구를 띄운다
-  setTimeout(function () { window.__ggBootResolve({}); }, 25000);
+  // 25초 안에 연결부가 뜨지 않으면(인터넷 끊김 등) 빈 저장소로 시작해서 안내 문구를 띄운다.
+  // 입장 코드 화면이 떠 있는 동안은 사람이 입력하는 시간이므로 이 시계를 멈춘다(__ggBootHold).
+  var timer = setTimeout(function () { window.__ggBootResolve({}); }, 25000);
+  window.__ggBootHold = function () { clearTimeout(timer); };
   window.claude = { use: function (name) { return boot.then(function (api) { return (api && api[name]) || null; }); } };
 })();
 </script>
@@ -766,6 +768,7 @@ function overlay(html) {
 }
 const closeOverlay = () => document.getElementById("ggGate")?.remove();
 function askCode(msg = "") {
+  window.__ggBootHold?.(); // 코드를 입력하는 동안 '연결 실패' 시계가 끝나지 않게
   return new Promise((resolve) => {
     const el = overlay(`
       <p>동아리원만 쓸 수 있습니다. 운영진에게 받은 <b>입장 코드</b>를 입력하세요.<br>창을 새로 열 때마다 다시 묻습니다.</p>
