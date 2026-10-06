@@ -830,6 +830,11 @@ async function boot() {
   const KEY = "gg-ok-" + uid;
   let ok = false;
   try { ok = sessionStorage.getItem(KEY) === "1"; } catch {}
+  if (ok && fs) {
+    // 이 탭에서 맞힌 뒤 운영진이 입장 코드를 바꿨으면 보안 규칙이 막으므로, 새로고침할 때 다시 묻는다
+    try { await getDocs(query(collection(fs, "items"), limit(1))); }
+    catch (e) { if (String(e?.code || "").includes("permission-denied")) { ok = false; try { sessionStorage.removeItem(KEY); } catch {} } }
+  }
   if (!ok) await askCode();
   try { sessionStorage.setItem(KEY, "1"); } catch {}
   closeOverlay();
