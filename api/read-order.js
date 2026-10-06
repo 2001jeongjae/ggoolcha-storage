@@ -26,8 +26,10 @@ module.exports = async function handler(req, res) {
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
   if (!token || !(await isMember(token))) return res.status(403).json({ error: "not_member" });
 
-  const key = process.env.GEMINI_API_KEY;
+  // 붙여 넣을 때 섞인 공백·따옴표·"GEMINI_API_KEY=" 같은 앞부분은 떼어 낸다
+  let key = String(process.env.GEMINI_API_KEY || "").trim().replace(/^GEMINI_API_KEY\s*=\s*/, "").replace(/^["']|["']$/g, "").trim();
   if (!key) return res.status(503).json({ error: "no_key" });
+  const keyInfo = { length: key.length, prefix: key.slice(0, 3), spaces: /\s/.test(key) };
 
   const body = req.body || {};
   const prompt = typeof body.prompt === "string" ? body.prompt : "";
@@ -48,12 +50,14 @@ module.exports = async function handler(req, res) {
   let last = { status: 502, message: "" };
   for (const model of MODELS) {
     try {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-        body: JSON.stringify(payload),
-      });
-      const j = await r.json().catch(() => ({}));
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+      let r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify(payload) });
+      let j = await r.json().catch(() => ({}));
+      if (!r.ok && /API key/i.test(j.error?.message || "")) {
+        // 키를 주소에 붙이는 방식도 한 번 시도
+        r = await fetch(`${url}?key=${encodeURIComponent(key)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        j = await r.json().catch(() => ({}));
+      }
       if (r.ok) {
         const text = (j.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
         return res.status(200).json({ text, model });
@@ -67,5 +71,5 @@ module.exports = async function handler(req, res) {
     }
   }
   const status = last.status === 429 ? 429 : last.status === 403 || /API key/i.test(last.message) ? 503 : 502;
-  return res.status(status).json({ error: status === 503 ? "no_key" : "upstream", detail: last.message });
+  return res.status(status).json({ error: status === 503 ? "no_key" : "upstream", detail: last.message, ...(status === 503 ? { keyInfo } : {}) });
 };
