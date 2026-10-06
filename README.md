@@ -23,14 +23,15 @@ EV 자작차 동아리 '꿀차'의 부품·공구·소모품 재고와 사용 �
 | `src/firebase-config.js` | Firebase 웹 앱 설정 값 |
 | `src/build.py` | 위 셋을 합쳐 `index.html`을 만드는 스크립트 (`python3 src/build.py`) |
 | `firestore.rules` | Firestore 보안 규칙 (입장 코드를 맞힌 기기만 접근) |
-| `api/read-order.js` | Vercel 서버 함수. 가린 주문 화면 사진을 Gemini로 읽어 구매·배송 칸을 채울 정보를 돌려줌 |
-| `vercel.json` | 서버 함수 실행 시간 설정 |
+| `api/read-order.js`, `vercel.json` | 예전 Gemini 사진 읽기용 서버 함수 (지금은 쓰지 않음) |
 
 - 호스팅: Vercel (GitHub 저장소에 올리면 자동 배포)
 - 데이터: Google Firebase Cloud Firestore (items · loans · purchases · ships · photos 컬렉션)
 - 로그인: Firebase 익명 로그인 + 동아리 입장 코드(`config/club` 문서, 앱에서는 읽을 수 없음)
 - 사진: 브라우저에서 1280px 이하 JPEG로 줄여 Firestore 문서에 저장
-- 사진 자동 입력: 개인정보(이름·전화번호·주소)를 화면에서 먼저 가린 뒤, `api/read-order` 서버가 Gemini API(무료)로 읽음. 키는 Vercel 환경 변수에만 있고, 서버는 입장 코드를 맞힌 기기의 요청만 받음
+- 사진 자동 입력: 브라우저 안에서 [Tesseract.js](https://github.com/naptha/tesseract.js) OCR(한국어+영어)로 주문 화면 글자를 읽고, 규칙으로 구매일·구매처·금액·주문번호·품목(이름·규격·수량·단가·분류)·택배사·운송장을 뽑음. 사진과 글자는 기기 밖으로 나가지 않고, 키도 필요 없음. 이름·전화번호·주소는 먼저 가리고, 영수증에는 가린 사진만 저장
+  - 처음 한 번 jsDelivr에서 글자 인식 엔진과 한국어·영어 데이터(약 8MB)를 내려받아 브라우저에 보관
+  - 한 번 읽어서 품목 합계가 결제 금액과 안 맞으면 다른 설정으로 한 번 더 읽고 나은 쪽을 씀
 
 ## 처음 설정하기
 
@@ -66,11 +67,9 @@ EV 자작차 동아리 '꿀차'의 부품·공구·소모품 재고와 사용 �
 4. 1분쯤 뒤 `https://ggoolcha-storage.vercel.app` 같은 주소가 생깁니다. 이 주소와 입장 코드를 동아리원에게 나눠 주면 끝입니다.
 5. (권장) Firebase **Authentication → 설정 → 승인된 도메인 → 도메인 추가**에 위 주소의 도메인(`ggoolcha-storage.vercel.app`)을 넣어 둡니다.
 
-### 4. Gemini 키 (사진 자동 입력용)
+### 4. 사진 자동 입력
 
-1. <https://aistudio.google.com/apikey> → **API 키 만들기** → 프로젝트 `ggoolcha-storage` 선택 → 생성된 키 복사 (무료, 카드 등록 없음)
-2. Vercel 프로젝트 → **Settings → Environment Variables** → 이름 `GEMINI_API_KEY`, 값에 키 붙여 넣기 → Save
-3. Vercel **Deployments**에서 최신 배포의 ⋯ → **Redeploy** (환경 변수는 다시 배포해야 적용됨)
+따로 설정할 것이 없습니다. (예전 Gemini 방식의 `GEMINI_API_KEY` 환경 변수는 이제 쓰지 않으니 지워도 됩니다.)
 
 ## 운영 메모
 
@@ -78,4 +77,5 @@ EV 자작차 동아리 '꿀차'의 부품·공구·소모품 재고와 사용 �
 - **입장 코드 바꾸기**: Firestore `config/club`의 `code` 값 수정. 이미 들어온 기기는 계속 쓸 수 있습니다.
 - **모든 기기 내보내기**: Firestore `members` 컬렉션의 문서를 지우면 다음 접속 때 코드를 다시 묻습니다.
 - **무료 한도(Spark 요금제)**: 저장 1GiB, 하루 읽기 5만 건·쓰기 2만 건. 동아리 규모에서는 충분합니다.
-- **AI 기능**(재고 질문, 배송 문구 붙여 넣기)은 claude.ai 버전에만 있고 이 배포 버전에서는 숨겨져 있습니다.
+- **배송 문구 붙여 넣기**는 사진과 같은 규칙으로 읽어서 배포 버전에서도 됩니다. **재고 질문 AI**는 claude.ai 버전에만 있습니다.
+- **사진 읽기가 틀릴 때**: 화면을 확대해서 캡처하거나 필요한 부분만 잘라 넣으면 잘 읽힙니다. 자동으로 채운 값은 저장 전에 꼭 확인하세요.

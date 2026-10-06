@@ -1045,7 +1045,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
         <label class="btn small primary" for="bAiPick"><svg class="icon"><use href="#i-spark"/></svg>사진 고르기</label>
         <input id="bAiPick" type="file" accept="image/*" multiple hidden>
       </div>
-      <span class="ai-note" id="bAiNote">쇼핑몰 주문·결제 내역 화면을 캡처해서 넣으면 구매일, 구매처, 금액, 품목을 채웁니다. 이름·전화번호·주소는 먼저 가린 뒤 읽고, 가린 사진이 영수증으로 저장됩니다.</span>
+      <span class="ai-note" id="bAiNote">쇼핑몰 주문·결제 내역 화면을 캡처해서 넣으면 구매일, 구매처, 금액, 품목을 채웁니다. 글자는 이 기기 안에서만 읽고, 이름·전화번호·주소를 가린 사진이 영수증으로 저장됩니다.</span>
     </div>
     <div class="section-box">
       <h3 class="sec-title">구매 정보 <span style="font-weight:400">— 구매 팀을 적으면 구매현황에 영수증과 함께 남습니다</span></h3>
@@ -1091,7 +1091,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
         <label class="btn small primary" for="sAiPick"><svg class="icon"><use href="#i-spark"/></svg>사진 고르기</label>
         <input id="sAiPick" type="file" accept="image/*" multiple hidden>
       </div>
-      <span class="ai-note">주문 내역이나 배송 조회 화면을 캡처해서 넣으면 쇼핑몰, 주문번호, 주문일, 도착 예정일, 운송장, 품목을 채웁니다. 이름·전화번호·주소는 먼저 가린 뒤 읽습니다.</span>
+      <span class="ai-note">주문 내역이나 배송 조회 화면을 캡처해서 넣으면 쇼핑몰, 주문번호, 주문일, 도착 예정일, 운송장, 품목을 채웁니다. 글자는 이 기기 안에서만 읽고, 이름·전화번호·주소는 먼저 가립니다.</span>
       <div class="receipts" id="sReceipts"></div>
       <details>
         <summary class="hint" style="cursor:pointer">사진 대신 안내 문구 붙여넣기</summary>
@@ -1161,7 +1161,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
 <dialog id="maskDlg" class="wide" aria-labelledby="maskTitle">
   <div class="dlg">
     <div class="dlg-head"><h2 id="maskTitle">개인정보 가리기</h2><button class="btn small ghost" type="button" data-mask="cancel">닫기</button></div>
-    <p style="margin:0">받는 사람 <b>이름, 전화번호, 주소</b>가 보이는 곳을 끌어서 검게 가려 주세요. 가린 사진만 AI가 읽고, 영수증으로도 가린 사진이 저장됩니다.</p>
+    <p style="margin:0">받는 사람 <b>이름, 전화번호, 주소</b>가 보이는 곳을 끌어서 검게 가려 주세요. 글자는 이 기기 안에서만 읽고, 동아리원이 보는 영수증에는 가린 사진이 저장됩니다.</p>
     <div class="mask-tools">
       <button class="btn small" type="button" data-mask="mode" id="maskMode" aria-pressed="true">가리기 모드</button>
       <button class="btn small" type="button" data-mask="undo">되돌리기</button>
@@ -1995,7 +1995,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
   function renderShipReceipts() { $("#sReceipts").innerHTML = receiptThumbs(S.sReceiptIds, S.sReceipts, "data-rmsrecid", "data-rmsrec", "주문 화면"); }
   function openBuy(prefill) {
     S.bReceipts = []; S.bReceiptIds = [...(prefill?.receipts || [])]; S.bLocPhoto = null; S.bFromShip = prefill?.shipId || null; renderReceipts();
-    $("#bAiBox").hidden = !sample || !S.canWrite; $("#bAiNote").textContent = AI_INTRO_BUY;
+    $("#bAiBox").hidden = !S.canWrite; $("#bAiNote").textContent = AI_INTRO_BUY;
     const me = savedMe();
     $("#bTeam").value = prefill?.team ?? me.team ?? ""; $("#bDate").value = prefill?.date || today();
     $("#bVendor").value = prefill?.vendor || ""; $("#bAmount").value = ""; $("#bMemo").value = prefill?.memo || "";
@@ -2091,7 +2091,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
     $("#sStatus").value = s?.status || "주문완료"; $("#sOrdered").value = s?.orderedAt || today(); $("#sEta").value = s?.eta || "";
     $("#sCourier").value = s?.courier || ""; $("#sTrack").value = s?.trackingNo || ""; $("#sMemo").value = s?.memo || "";
     $("#sLines").innerHTML = (s?.items?.length ? s.items : [{}, {}]).map((v) => shipLineHtml(v)).join("");
-    $("#pasteBox").hidden = !sample || !S.canWrite; $("#sPaste").value = ""; $("#sAiNote").textContent = "";
+    $("#pasteBox").hidden = !S.canWrite; $("#sPaste").value = ""; $("#sAiNote").textContent = "";
     S.sReceipts = []; S.sReceiptIds = [...(s?.receipts || [])]; renderShipReceipts();
     $("#sDelBtn").hidden = !s; $("#sDelConfirm").hidden = true;
     $("#shipDlg").showModal();
@@ -2124,20 +2124,12 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
     finally { btn.disabled = false; }
   }
   // ---------- 주문 화면 사진 → 자동 입력 ----------
-  const AI_INTRO_BUY = "쇼핑몰 주문·결제 내역 화면을 캡처해서 넣으면 구매일, 구매처, 금액, 품목을 채웁니다. 이름·전화번호·주소는 먼저 가린 뒤 읽고, 가린 사진이 영수증으로 저장됩니다.";
+  const AI_INTRO_BUY = "쇼핑몰 주문·결제 내역 화면을 캡처해서 넣으면 구매일, 구매처, 금액, 품목을 채웁니다. 글자는 이 기기 안에서만 읽고, 이름·전화번호·주소를 가린 사진이 영수증으로 저장됩니다.";
   const UNITS = ["개", "세트", "m", "롤", "통", "장"];
   const isDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ""));
-  const ORDER_RULES = () => "\n규칙:\n- 받는 사람 이름·전화번호·주소·카드번호 같은 개인정보는 읽지도 적지도 마세요(검게 가려져 있을 수 있습니다).\n" +
-    "- 사진이 여러 장이면 한 화면을 위에서 아래로 나눠 찍은 것입니다. 순서대로 이어 보고, 경계에서 겹쳐 보이는 상품은 한 번만 적으세요.\n" +
-    "- 주문일이 안 보이면 상품주문번호 앞 8자리(YYYYMMDD)를 주문일로 보세요. 연도가 안 보이면 " + new Date().getFullYear() + "년입니다.\n" +
-    "- 취소선이 그어진 원래 가격, 쿠폰 할인 전 금액은 무시하고 실제로 낸 금액을 쓰세요.\n" +
-    "- 옵션에 적힌 개수(예: '낱개구매(1개) 100개' → 100)가 실제 수량입니다. 가격은 그 줄 전체 금액이니 1개당 가격은 수량으로 나누세요.\n" +
-    "- 분류: 볼트·너트·와셔·케이블타이·테이프처럼 쓰면 없어지는 체결재·소모재는 소모품, 렌치·드라이버·측정기 같은 도구는 공구, 그 밖에 차량에 장착하는 부품은 부품.\n" +
-    "- 상품명은 판매 문구(무료배송, 대량 등)를 빼고 짧게, 규격(M8, M10x30 등)은 spec에 따로 적으세요.";
-  const AI_ERR = (e) => e?.code === "rate_limited" ? "AI 사용량이 잠시 많습니다. 1분쯤 뒤에 다시 해 주세요."
-    : e?.code === "not_granted" || e?.code === "sampling_disabled" ? "지금은 AI로 읽을 수 없습니다. 직접 입력해 주세요."
+  const OCR_ERR = (e) => /script|fetch|network|Failed to fetch|NetworkError|load/i.test(String(e?.message || e))
+    ? "글자 인식 도구를 불러오지 못했습니다. 인터넷 연결을 확인하고 다시 해 주세요."
     : "사진을 읽지 못했습니다. 더 선명하게 캡처하거나 직접 입력해 주세요.";
-  async function capImages(blobs) { try { const n = (await sample.limits?.())?.images?.maxCount; return n ? blobs.slice(0, n) : blobs; } catch { return blobs; } }
   function cleanItems(arr) {
     return (Array.isArray(arr) ? arr : []).filter((x) => x && String(x.name || "").trim()).slice(0, 40).map((x) => ({
       name: String(x.name).trim().slice(0, 80), spec: String(x.spec || "").trim().slice(0, 80), category: CATS.includes(x.category) ? x.category : "부품",
@@ -2145,22 +2137,19 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
       unitPrice: Math.max(0, Math.round(Number(x.unitPrice) || 0)) || "",
     }));
   }
-  const ITEM_SHAPE = '{"name": "상품명", "spec": "규격", "category": "부품" | "공구" | "소모품", "group": "세부 분류(예: 체결류)", "qty": 수량 숫자, "unit": "개" | "세트" | "m" | "롤" | "통" | "장", "unitPrice": 1개당 실제 가격(원, 숫자)}';
-  const BUY_PROMPT = () => "첨부한 사진은 쇼핑몰(네이버페이·스마트스토어, 쿠팡, 한국미스미, 알리익스프레스 등)의 주문·결제 내역 화면입니다. 동아리 구매 기록에 필요한 정보만 뽑아 JSON 하나로 답하세요. 없는 값은 빈 문자열이나 0.\n" +
-    '{"mall": "네이버" | "쿠팡" | "한국미스미" | "알리익스프레스" | "기타", "vendor": "판매자(스토어) 이름, 여럿이면 쉼표로", "date": "주문일 YYYY-MM-DD", "amount": 실제 결제한 총 금액(원, 숫자), "orderNo": "주문번호", "items": [' + ITEM_SHAPE + "]}" + ORDER_RULES();
-  const SHIP_PROMPT = () => "첨부한 사진은 쇼핑몰 주문 내역이나 배송 조회 화면입니다. 배송 관리에 필요한 정보만 뽑아 JSON 하나로 답하세요. 없는 값은 빈 문자열이나 0.\n" +
-    '{"mall": "네이버" | "쿠팡" | "한국미스미" | "알리익스프레스" | "기타", "orderNo": "주문번호(따로 없으면 첫 상품주문번호)", "orderedAt": "주문일 YYYY-MM-DD", "eta": "도착 예정일 YYYY-MM-DD (예: \'9. 9.(수) 도착 예정\' → 그 날짜)", ' +
-    '"courier": "택배사", "trackingNo": "운송장 번호(숫자·영문만)", "status": "주문완료" | "배송중" | "도착", "items": [' + ITEM_SHAPE + "]}" + ORDER_RULES();
+  // 다 쓰고 2분 동안 안 쓰면 글자 인식 엔진을 내려서 메모리를 돌려준다
+  function ocrIdle() { clearTimeout(OCR.idle); OCR.idle = setTimeout(() => { const w = OCR.worker; OCR.worker = null; OCR.loading = null; w?.terminate?.(); }, 120000); }
 
   // onlyIfEmpty: '영수증 사진 추가'로 넣었을 때는 품목이 비어 있을 때만 자동으로 채운다
   async function buyAiPhotos(files, onlyIfEmpty = false) {
-    const blobs = await pickMasked(files); if (!blobs) return;
-    S.bReceipts.push(...blobs); renderReceipts();
+    const got = await pickMasked(files); if (!got) return;
+    S.bReceipts.push(...got.blobs); renderReceipts();
     if (onlyIfEmpty && readLines().length) { $("#bAiNote").textContent = "영수증을 붙였습니다. 품목이 이미 있어 자동 입력은 하지 않았습니다."; return; }
-    const note = $("#bAiNote"), pick = $("#bAiPick"); pick.disabled = true; note.textContent = "사진을 읽는 중… (10~30초)";
-    try { fillBuyFromAi(await sample.json(BUY_PROMPT(), { images: await capImages(blobs) })); }
-    catch (e) { note.textContent = AI_ERR(e); }
-    finally { pick.disabled = false; }
+    const note = $("#bAiNote"), pick = $("#bAiPick"); pick.disabled = true; note.textContent = "사진 읽는 중…";
+    clearTimeout(OCR.idle);
+    try { fillBuyFromAi(await ocrOrder(got.ocr, "buy", (t) => (note.textContent = t))); }
+    catch (e) { console.warn(e); note.textContent = OCR_ERR(e); }
+    finally { pick.disabled = false; ocrIdle(); }
   }
   function fillBuyFromAi(r) {
     if (isDate(r?.date)) $("#bDate").value = r.date;
@@ -2175,18 +2164,23 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
       box.querySelectorAll(".line-card").forEach(refreshMatch);
       updateSum();
     }
-    $("#bAiNote").textContent = items.length ? `품목 ${items.length}줄을 채웠습니다. 구매 팀을 적고, 저장 전에 수량·단가를 한 번 확인해 주세요.` : "사진에서 품목을 찾지 못했습니다. 직접 입력해 주세요.";
+    const sum = items.reduce((a, x) => a + (Number(x.unitPrice) || 0) * x.qty, 0), goods = r?._goods || 0;
+    const off = goods && sum && Math.abs(sum - goods) / goods > 0.03 ? ` 품목 합계(${sum.toLocaleString()}원)가 상품 금액(${goods.toLocaleString()}원)과 달라요.` : "";
+    $("#bAiNote").textContent = items.length
+      ? `품목 ${items.length}줄을 채웠습니다.${off} 사진 글자를 기계로 읽은 것이라 틀릴 수 있으니, 구매 팀을 적고 저장 전에 상품명·수량·단가를 확인해 주세요.`
+      : (r?.amount || r?.date ? "구매일·금액은 채웠지만 품목은 찾지 못했습니다. 품목은 직접 입력해 주세요." : "사진에서 주문 정보를 찾지 못했습니다. 화면을 더 크게 캡처하거나 직접 입력해 주세요.");
   }
   async function shipAiPhotos(files) {
-    const blobs = await pickMasked(files); if (!blobs) return;
-    S.sReceipts.push(...blobs); renderShipReceipts();
-    const note = $("#sAiNote"), pick = $("#sAiPick"); pick.disabled = true; note.textContent = "사진을 읽는 중… (10~30초)";
-    try { fillShipFromAi(await sample.json(SHIP_PROMPT(), { images: await capImages(blobs) })); }
-    catch (e) { note.textContent = AI_ERR(e); }
-    finally { pick.disabled = false; }
+    const got = await pickMasked(files); if (!got) return;
+    S.sReceipts.push(...got.blobs); renderShipReceipts();
+    const note = $("#sAiNote"), pick = $("#sAiPick"); pick.disabled = true; note.textContent = "사진 읽는 중…";
+    clearTimeout(OCR.idle);
+    try { fillShipFromAi(await ocrOrder(got.ocr, "ship", (t) => (note.textContent = t))); }
+    catch (e) { console.warn(e); note.textContent = OCR_ERR(e); }
+    finally { pick.disabled = false; ocrIdle(); }
   }
   function fillShipFromAi(r) {
-    if (MALLS.includes(r?.mall)) $("#sMall").value = r.mall;
+    if (MALLS.includes(r?.mall) && r.mall !== "기타") $("#sMall").value = r.mall;
     const set = (sel, v) => { if (v && !$(sel).value.trim()) $(sel).value = String(v).slice(0, 40); };
     set("#sOrder", r?.orderNo); set("#sCourier", r?.courier); set("#sTrack", String(r?.trackingNo || "").replace(/[^0-9A-Za-z]/g, ""));
     if (isDate(r?.orderedAt)) $("#sOrdered").value = r.orderedAt;
@@ -2195,14 +2189,399 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
     else if (r?.trackingNo && $("#sStatus").value === "주문완료") $("#sStatus").value = "배송중";
     const items = cleanItems(r?.items).map((x) => ({ ...x, name: x.spec && !x.name.includes(x.spec) ? `${x.name} ${x.spec}`.slice(0, 80) : x.name }));
     if (items.length) $("#sLines").innerHTML = items.map((v) => shipLineHtml(v)).join("");
-    $("#sAiNote").textContent = items.length || r?.orderNo ? "채웠습니다. 주문 팀을 적고, 저장 전에 한 번 확인해 주세요." : "알아볼 수 있는 정보가 없었습니다. 직접 입력해 주세요.";
+    $("#sAiNote").textContent = items.length || r?.orderNo || r?.trackingNo ? "채웠습니다. 기계로 읽은 것이라 틀릴 수 있으니, 주문 팀을 적고 저장 전에 한 번 확인해 주세요." : "알아볼 수 있는 정보가 없었습니다. 직접 입력해 주세요.";
   }
-  async function shipAi() {
-    const text = $("#sPaste").value.trim(); if (!text || !sample) return;
-    const note = $("#sAiNote"), btn = $("#sAi"); btn.disabled = true; note.textContent = "읽는 중…";
-    try { fillShipFromAi(await sample.json(SHIP_PROMPT().replace("첨부한 사진은", "아래 글은") + "\n\n" + text.slice(0, 6000), { modelTier: "quick" })); }
-    catch (e) { note.textContent = AI_ERR(e); }
-    finally { btn.disabled = false; }
+  function shipAi() {
+    const text = $("#sPaste").value.trim(); if (!text) return;
+    try { fillShipFromAi(parseOrder(text.slice(0, 8000))); }
+    catch (e) { console.warn(e); $("#sAiNote").textContent = "문구를 읽지 못했습니다. 직접 입력해 주세요."; }
+  }
+
+  // ---------- 주문 화면 글자 읽기 (OCR, 브라우저 안에서만) ----------
+  // Tesseract.js(한국어+영어)로 사진의 글자를 읽고, 아래 parseOrder가 규칙으로 항목을 뽑는다.
+  // 사진과 글자는 이 기기 밖으로 나가지 않는다. 처음 한 번 글자 인식 모델(약 8MB)을 내려받아 브라우저에 보관한다.
+  const OCR_SRC = Object.assign({ script: "https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js" }, window.GG_OCR || {});
+  const OCR = { worker: null, loading: null, onStatus: null };
+  function loadScriptOnce(src) {
+    return new Promise((res, rej) => {
+      const s = document.createElement("script"); s.src = src; s.async = true; s.crossOrigin = "anonymous";
+      s.onload = () => res(); s.onerror = () => rej(new Error("script")); document.head.appendChild(s);
+    });
+  }
+  function ocrWorker() {
+    if (OCR.worker) return Promise.resolve(OCR.worker);
+    if (!OCR.loading) OCR.loading = (async () => {
+      if (!window.Tesseract) await loadScriptOnce(OCR_SRC.script);
+      const opt = { logger: (m) => OCR.onStatus?.(m) };
+      for (const k of ["workerPath", "corePath", "langPath"]) if (OCR_SRC[k]) opt[k] = OCR_SRC[k];
+      const w = await window.Tesseract.createWorker(OCR_SRC.langs || ["kor", "eng"], 1, opt);
+      await w.setParameters({ preserve_interword_spaces: "1" });
+      OCR.worker = w; return w;
+    })().catch((e) => { OCR.loading = null; throw e; });
+    return OCR.loading;
+  }
+  // 사진 한 장 → 글자 읽기 좋은 흑백 캔버스 여러 장.
+  // 글자 줄 높이를 재서 줄 높이가 opt.target(px) 근처가 되게 키우거나 줄이고, 회색 글씨는 opt.gain배 진하게, 어두운 화면은 뒤집는다.
+  // rects(가린 곳, 0~1 비율)는 배경색으로 지워서 읽지 않는다.
+  function ocrPages(src, rects = [], opt = {}) {
+    const gain = opt.gain || 2, target = opt.target || 40;
+    let W = src.width, H = src.height;
+    const k0 = Math.min(1, 2400 / W, Math.sqrt(30e6 / (W * H)));
+    W = Math.max(1, Math.round(W * k0)); H = Math.max(1, Math.round(H * k0));
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const ctx = c.getContext("2d", { willReadFrequently: true }); ctx.drawImage(src, 0, 0, W, H);
+    const img = ctx.getImageData(0, 0, W, H), d = img.data, N = W * H;
+    const lum = new Uint8ClampedArray(N), hist = new Uint32Array(256);
+    for (let i = 0, j = 0; i < N; i++, j += 4) { const v = (d[j] * 299 + d[j + 1] * 587 + d[j + 2] * 114) / 1000; lum[i] = v; hist[lum[i]]++; }
+    let bg = 0; for (let v = 1; v < 256; v++) if (hist[v] > hist[bg]) bg = v;
+    for (const r of rects) {
+      const x0 = Math.max(0, Math.floor(r.x * W) - 3), y0 = Math.max(0, Math.floor(r.y * H) - 3);
+      const x1 = Math.min(W, Math.ceil((r.x + r.w) * W) + 3), y1 = Math.min(H, Math.ceil((r.y + r.h) * H) + 3);
+      for (let y = y0; y < y1; y++) lum.fill(bg, y * W + x0, y * W + x1);
+    }
+    const dark = bg < 110;
+    // 배경과 다른 정도 → 0(흰) ~ 255(검정)
+    const ink = new Uint8ClampedArray(N), row = new Uint32Array(H);
+    for (let y = 0, i = 0; y < H; y++) for (let x = 0; x < W; x++, i++) {
+      const diff = dark ? lum[i] - bg : bg - lum[i];
+      const v = diff < 14 ? 0 : Math.min(255, diff * gain); ink[i] = v; if (v > 110) row[y]++;
+    }
+    // 글자 줄 높이 재기 (가로로 잉크가 있는 줄 묶음의 높이 중앙값)
+    const minInk = Math.max(2, W * 0.002), runs = []; let start = -1;
+    for (let y = 0; y <= H; y++) {
+      const on = y < H && row[y] >= minInk;
+      if (on && start < 0) start = y;
+      if (!on && start >= 0) { const h = y - start; if (h >= 5 && h <= 220 * k0 + 20) runs.push(h); start = -1; }
+    }
+    runs.sort((a, b) => a - b);
+    const lineH = runs.length ? runs[Math.floor(runs.length / 2)] : 36;
+    let k = Math.min(4, Math.max(0.6, target / lineH)); if (k > 0.85 && k < 1.2) k = 1;
+    k = Math.min(k, 4000 / W, Math.sqrt(40e6 / (W * H)));
+    // 흑백 이미지로
+    const g = document.createElement("canvas"); g.width = W; g.height = H;
+    const gctx = g.getContext("2d"), out = gctx.createImageData(W, H), o = out.data;
+    for (let i = 0, j = 0; i < N; i++, j += 4) { const v = 255 - ink[i]; o[j] = o[j + 1] = o[j + 2] = v; o[j + 3] = 255; }
+    gctx.putImageData(out, 0, 0);
+    // 세로로 아주 길면 글자가 없는 줄에서 나눈다 (한 장 최대 약 5000px)
+    const OW = Math.max(1, Math.round(W * k)), maxH = Math.floor(5000 / k), pages = [];
+    for (let y = 0; y < H;) {
+      let end = Math.min(H, y + maxH);
+      if (end < H) { for (let t = end; t > y + maxH * 0.6; t--) if (row[t] === 0) { end = t; break; } }
+      const ph = end - y, p = document.createElement("canvas"); p.width = OW; p.height = Math.max(1, Math.round(ph * k));
+      const pctx = p.getContext("2d"); pctx.imageSmoothingEnabled = true; pctx.imageSmoothingQuality = "high";
+      pctx.fillStyle = "#fff"; pctx.fillRect(0, 0, p.width, p.height);
+      pctx.drawImage(g, 0, y, W, ph, 0, 0, OW, p.height);
+      pages.push(p); y = end;
+    }
+    return pages;
+  }
+  async function ocrRead(sources, onStatus, opt = {}) {
+    OCR.onStatus = (m) => {
+      if (/language|loading|initializ/i.test(m.status || "")) onStatus?.(`글자 인식 준비 중… ${Math.round((m.progress || 0) * 100)}% (처음 한 번만)`);
+    };
+    const w = await ocrWorker();
+    const pages = sources.flatMap((s) => ocrPages(s.canvas, s.rects, opt));
+    const texts = [];
+    for (let i = 0; i < pages.length; i++) {
+      OCR.onStatus = (m) => { if (m.status === "recognizing text") onStatus?.(`${opt.label || "사진 읽는 중"}… ${pages.length > 1 ? `${i + 1}/${pages.length} ` : ""}${Math.round((m.progress || 0) * 100)}%`); };
+      const { data } = await w.recognize(pages[i]);
+      texts.push(data.text || "");
+    }
+    OCR.onStatus = null;
+    return texts.join("\n");
+  }
+  // 품목 금액 합계가 결제 금액과 맞는지로 읽은 결과를 점수 매긴다
+  function orderScore(r, kind) {
+    const sum = r.items.reduce((a, x) => a + (Number(x.unitPrice) || 0) * x.qty, 0), ref = r._goods || r.amount;
+    const fit = ref && sum ? Math.abs(sum - ref) / ref : 1;
+    let sc = r.items.length * 2 + (fit < 0.03 ? 6 : fit < 0.15 ? 2 : 0);
+    for (const k of kind === "ship" ? ["orderNo", "trackingNo", "courier", "eta", "orderedAt"] : ["date", "amount", "orderNo", "vendor"]) if (r[k]) sc += 1;
+    return { sc, good: r.items.length > 0 && (!ref || fit < 0.03) && (kind !== "ship" || !!(r.orderNo || r.trackingNo)) };
+  }
+  // 사진 → 주문 정보. 한 번 읽어서 합계가 안 맞으면 다른 설정으로 한 번 더 읽고 나은 쪽을 쓴다.
+  async function ocrOrder(sources, kind, onStatus) {
+    const tA = await ocrRead(sources, onStatus, { gain: 2, target: 40 });
+    const rA = parseOrder(tA), sA = orderScore(rA, kind);
+    if (sA.good) return rA;
+    const tB = await ocrRead(sources, onStatus, { gain: 1.3, target: 54, label: "한 번 더 읽는 중" });
+    const rB = parseOrder(tB), sB = orderScore(rB, kind);
+    const [a, b] = sB.sc > sA.sc ? [rB, rA] : [rA, rB];
+    for (const k of ["mall", "vendor", "date", "orderedAt", "amount", "orderNo", "eta", "courier", "trackingNo", "status"]) if ((!a[k] || a[k] === "기타") && b[k]) a[k] = b[k];
+    if (!a.items.length) a.items = b.items;
+    return a;
+  }
+
+  // ---------- 읽은 글자 → 주문 정보 ----------
+  const P_MONEY = /([-+]?)\s*(\d{1,3}(?:[,.]\d{3})+|\d{1,9})\s*원/g;
+  const P_LABEL = /^[^가-힣A-Za-z0-9]*(주문|배송|도착|결제|교환|반품|취소|조회|리뷰|후기|장바구니|구매|문의|상세|쿠폰|적립|포인트|할인|총\s|총상품|합계|수량|옵션|판매자|상품\s*정보|상품\s*금액|상품\s*가격|상품\s*주문|진행|택배|운송장|송장|받는|수령|연락처|휴대|전화|주소|요청|메모|재구매|선물|판매|스토어|배송비|카드|머니|일시불|할부|영수증|현금|입금|환불|쿠페이|네이버\s*페이|최종|공급가|부가세|과세|면세|간편|계좌|무통장)/;
+  const P_STATUS = /(결제\s*완료|상품\s*준비\s*중|배송\s*준비\s*중|발송\s*대기|발송\s*완료|배송\s*중|배송\s*완료|배달\s*완료|도착\s*완료|구매\s*확정|취소\s*완료|반품|교환|주문\s*완료|입금\s*대기|출고\s*완료|도착\s*예정|도착\s*보장)/;
+  const P_BTN = /^(배송\s*조회|교환|반품|취소|리뷰|장바구니|재구매|구매\s*확정|문의|상세\s*보기|주문\s*상세|판매자\s*문의|선물|후기)/;
+  const P_PHONE = /(^|[^\d])01[016789][\s.\-]?\d{3,4}[\s.\-]?\d{4}(?!\d)/;
+  const P_ADDR = /(특별시|광역시|특별자치|[가-힣]+도\s+[가-힣]+[시군])|[가-힣]+[시군구]\s+[가-힣0-9]+(로|길|동|읍|면)\s*\d/;
+  const COURIERS = [["CJ대한통운", /CJ\s*대한\s*통운|대한\s*통운|한통운|대한통|CJ\s*택배|CJ\s*logistics/i], ["우체국택배", /우체국/], ["한진택배", /한진/], ["롯데택배", /롯데\s*(택배|글로벌|로지스)/],
+    ["로젠택배", /로젠/], ["경동택배", /경동/], ["대신택배", /대신\s*택배/], ["일양로지스", /일양/], ["합동택배", /합동\s*택배/], ["천일택배", /천일\s*택배/], ["건영택배", /건영/],
+    ["CU 편의점택배", /CU\s*(편의점)?\s*택배|CU\s*post/i], ["GS Postbox", /GS\s*(postbox|포스트박스|편의점)/i], ["쿠팡 로켓배송", /로켓\s*(배송|와우|프레시)|쿠팡\s*친구/],
+    ["해외 배송", /cainiao|차이니아오|4PX|\bEMS\b|\bDHL\b|fedex|\bUPS\b|yanwen|옌원|\bYT\s*express/i]];
+  const KW_TOOL = /렌치|스패너|드라이버|소켓|라쳇|라첼|플라이어|펜치|니퍼|커터|캘리퍼|버니어|마이크로미터|게이지|측정|토크|드릴(?!\s*비스)|그라인더|망치|해머|줄자|인두|멀티\s*미터|테스터|클램프|바이스|탭\s*핸들|다이스|톱|가위|토치|리벳\s*건|압착기|스트리퍼|수평계|직각자|공구|핀셋|글루건|히팅건|열풍기|육각\s*키|L\s*렌치|롱노즈|바이스\s*그립/;
+  const KW_CONS = /볼트|너트|와셔|워셔|스크류|스크루|나사|피스|리벳|분할\s*핀|스프링\s*핀|케이블\s*타이|타이랩|테이프|절연|수축\s*튜브|장갑|사포|그리스|오일|윤활|접착|본드|실리콘|록타이트|납땜|솔더|플럭스|물티슈|휴지|마스킹|와이프|스프레이|WD-?40|퓨즈|건전지|소모품|에폭시|순간\s*접착|청소|세척|절단석|연마석|용접봉/i;
+  const KW_FASTEN = /볼트|너트|와셔|워셔|스크류|스크루|(?:^|[^좌우역])나사|피스|리벳|분할\s*핀|스프링\s*핀|스페이서|인서트/;
+  const KW_ELEC = /전선|케이블(?!\s*타이)|커넥터|단자|퓨즈|릴레이|스위치|배터리|전원|터미널|수축\s*튜브|절연/;
+  const KW_MEAS = /캘리퍼|버니어|게이지|멀티\s*미터|줄자|마이크로미터|측정|테스터|수평계/;
+  const MARKETING = /\[?(무료\s*배송|당일\s*발송|당일\s*출고|국내\s*배송|국내\s*발송|대량|특가|최저가|정품|빠른\s*배송|오늘\s*출발|무배|신상|인기|추천|핫딜|1\+1|best|BEST|HOT|NEW)\]?/g;
+
+  function ymd(y, m, d) {
+    y = +y; m = +m; d = +d;
+    if (!(y >= 2000 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31)) return "";
+    return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+  function moneyIn(s) {
+    const out = []; let m; P_MONEY.lastIndex = 0;
+    while ((m = P_MONEY.exec(s))) {
+      const raw = m[2]; if (/^\d{1,3}\.\d{3}$/.test(raw) && !/[,]/.test(raw) && /\d+\.\d+\.\d+/.test(s)) continue;
+      out.push({ v: Number(raw.replace(/[,.]/g, "")) * (m[1] === "-" ? -1 : 1), i: m.index, end: m.index + m[0].length });
+    }
+    return out;
+  }
+  function cleanOcrLine(s) {
+    return String(s)
+      .replace(/[|¦]/g, " ")
+      .replace(/[〉›»]/g, ">").replace(/[〈‹«]/g, "<")
+      .replace(/[ㆍ·•∙・]/g, " · ")
+      .replace(/(원\s*[ㆍ·•∙・]\s*\d{1,4})\s*(?:7[4HhKk]|J[Hh]|개H)(?!\d)/g, "$1 개")
+      .replace(/(\d{1,3}(?:,\d{3})+)\s+-\s+(\d{1,3})\s*7[HhKk4]\s*$/, "$1원 · $2개") // '원 · 3 개'가 '- 37H'로 읽힌 경우
+      .replace(/(\d)\s*[7기][HhKk](?![a-zA-Z])/g, "$1개") // '개'를 '7H'로 읽는 경우
+      .replace(/(\d{1,3}(?:,\d{3})+)\s*[8B](?![\d,])/g, "$1원") // '원'을 '8'로 읽는 경우
+      .replace(/(\d{1,3}(?:,\d{3})+)\s*[윈월](?![가-힣])/g, "$1원")
+      .replace(/(\d)\s*(?:0ㅁ|ㅁㅁ|rnrn|nm|rnm|mrn)(?![a-zA-Z가-힣])/g, "$1mm")
+      .replace(/(\d)\s+(?=,\d{3})/g, "$1").replace(/,\s+(?=\d{3}\b)/g, ",")
+      .replace(/\s{2,}/g, "  ").trim();
+  }
+  function qtyIn(s) {
+    // '낱개구매(1개) 100개' → 100, '수량 2개' → 2, '(4개)' → 4, 'x 3' → 3. '100개입'은 묶음 단위라 무시
+    const t = String(s).replace(/\(\s*\d+\s*개\s*\)/g, (m, i, all) => (/\d+\s*개(?!입)/.test(all.slice(i + m.length)) ? " " : m));
+    let m = t.match(/수량\s*[:：]?\s*(\d{1,5})/); if (m) return +m[1];
+    const all = [...t.matchAll(/(\d{1,5})\s*(개|EA|ea|pcs|PCS|세트|set|SET|롤|통|장|봉|팩|박스)(?![입가-힣])/g)];
+    if (all.length) return +all[all.length - 1][1];
+    m = t.match(/[x×X*]\s*(\d{1,4})\b(?!\s*(mm|cm|m\b))/); if (m && !/\d\s*[x×X*]\s*\d/.test(t)) return +m[1];
+    return 0;
+  }
+  function specIn(name) {
+    const m = String(name).match(/\bM\s?\d{1,2}(?:\.\d)?(?:\s*[x×X*]\s*\d+(?:\.\d+)?)?(?:\s*mm)?\b/);
+    return m ? m[0].replace(/\s+/g, "").replace(/[×X*]/g, "x").replace(/mm$/, "") : "";
+  }
+  const KW_PART = /베어링|브라켓|브래킷|샤프트|기어|모터|파이프|프로파일|플레이트|판재|부싱|로드\s*엔드|허브|너클|댐퍼|쇼바|타이어|휠|체인|스프라켓|스프로킷|풀리|센서|컨트롤러|ECU|BMS|인버터|암\b|링크|마운트|캘리퍼\s*브레이크|디스크|패드/;
+  function catOf(name) {
+    name = String(name).replace(/[좌우]\s*나사|역\s*나사/g, " ");
+    if (/케이블\s*타이|타이랩/.test(name)) return "소모품";
+    if (KW_PART.test(name) && !/(볼트|너트|와셔|스크류|나사|핀)\s*(세트)?\s*$/.test(name.replace(/\b[A-Z0-9\-]+\b/g, "").trim())) return "부품";
+    if (KW_TOOL.test(name) && !/볼트|너트|와셔|스크류|나사/.test(name.replace(/렌치\s*볼트/g, ""))) return "공구";
+    if (KW_CONS.test(name)) return "소모품";
+    return "부품";
+  }
+  function groupOf(name) {
+    if (KW_FASTEN.test(name)) return "체결류";
+    if (KW_MEAS.test(name)) return "측정";
+    if (KW_ELEC.test(name)) return "전기";
+    return "";
+  }
+  function unitOf(name) {
+    if (/세트|SET\b|set\b/.test(name) && !/세트\s*\d+\s*개/.test(name)) return "세트";
+    if (/테이프|롤\b/.test(name)) return "롤";
+    return "개";
+  }
+  function nameScore(s) {
+    const t = s.replace(/[^가-힣A-Za-z0-9]/g, "");
+    if (t.length < 3) return -9;
+    const ko = (s.match(/[가-힣]/g) || []).length, en = (s.match(/[A-Za-z]/g) || []).length;
+    if (ko + en < 2) return -9;
+    let sc = 1;
+    if (/\d/.test(s)) sc += 1.5;
+    if (/\bM\d|mm|cm|\d\s*m\b|개입|\bpcs\b|ea\b|[x×]\s*\d|\d+\s*[Vv]\b|\d+\s*[Aa]\b|kg|\bW\b/.test(s)) sc += 1.5;
+    if (t.length >= 10) sc += 1;
+    if (s.trim().split(/\s+/).length >= 2) sc += 0.5;
+    // 엉터리로 읽힌 줄(기호가 많음)은 감점
+    const junk = (s.match(/[^가-힣A-Za-z0-9\s()\[\]\-+/.,:x×%&#~'"]/g) || []).length;
+    sc -= junk * 0.7;
+    return sc;
+  }
+  function stripName(s) {
+    return s.replace(MARKETING, " ").replace(/\(\s*\d+\s*개\s*\)\s*$/, "").replace(/[“”"'`]+\s*개?\s*$/, "").replace(/\s{2,}/g, " ").replace(/^[\s\-·,.>]+|[\s\-·,.>]+$/g, "").trim();
+  }
+
+  function parseOrder(text) {
+    const now = new Date(), Y = now.getFullYear();
+    const raw = String(text || "").replace(/\r/g, "").split("\n").map(cleanOcrLine).filter((s) => s && !/^[^가-힣A-Za-z0-9]{1,3}$/.test(s));
+    // 개인정보로 보이는 줄은 아예 버린다 (가렸더라도 한 번 더)
+    const L = raw.filter((s) => !P_PHONE.test(s) && !P_ADDR.test(s) && !/^(받는\s*(분|사람)|수령인|연락처|휴대폰|주소|배송지\s*주소)\s*[:：]?\s*\S/.test(s));
+    const all = L.join("\n");
+    const r = { mall: "기타", vendor: "", date: "", amount: 0, orderNo: "", orderedAt: "", eta: "", courier: "", trackingNo: "", status: "", items: [] };
+
+    // 쇼핑몰
+    const score = { 네이버: (all.match(/네이버|naver|N\s?pay|스마트\s*스토어|smartstore|상품\s*주문\s*번호/gi) || []).length, 쿠팡: (all.match(/쿠팡|coupang|로켓\s*(배송|와우)|쿠페이/gi) || []).length,
+      한국미스미: (all.match(/미스미|misumi/gi) || []).length, 알리익스프레스: (all.match(/aliexpress|알리\s*익스프레스|알리익스/gi) || []).length };
+    const best = Object.entries(score).sort((a, b) => b[1] - a[1])[0]; if (best[1] > 0) r.mall = best[0];
+
+    // 주문번호
+    for (const s of L) {
+      if (/상품\s*주문/.test(s)) continue;
+      const m = s.match(/주문\s*번호\s*[:：]?\s*([0-9A-Za-z][0-9A-Za-z\-]{5,29})/); if (m) { r.orderNo = m[1]; break; }
+    }
+    const dPre = (() => { for (const s of L) { if (!/주문|결제/.test(s) || /도착/.test(s)) continue; const m = s.match(/(20\d{2})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*(\d{1,2})/); if (m) return m[1] + m[2].padStart(2, "0") + m[3].padStart(2, "0"); } return ""; })();
+    if (!r.orderNo && dPre) for (const s of L) { if (/상품\s*주문/.test(s)) continue; const m = s.match(new RegExp("\\b(" + dPre + "\\d{6,12})\\b")); if (m) { r.orderNo = m[1]; break; } }
+    if (!r.orderNo) for (const s of L) { const m = s.match(/(?:order\s*(?:no|number|id)|주문\s*코드)\s*[.:：#]?\s*([0-9A-Za-z\-]{6,30})/i); if (m) { r.orderNo = m[1]; break; } }
+    if (!r.orderNo) for (const s of L) { const m = s.match(/상품\s*주문\s*번호\s*[:：]?\s*(\d{8,24})/); if (m) { r.orderNo = m[1]; break; } }
+    if (!r.orderNo) for (const s of L) { if (/주문/.test(s) && !/상품\s*주문/.test(s)) { const m = s.match(/\b(\d{12,24})\b/); if (m) { r.orderNo = m[1]; break; } } }
+
+    // 날짜
+    const fullDate = (s) => { const m = s.match(/(20\d{2})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*(\d{1,2})/); return m ? ymd(m[1], m[2], m[3]) : ""; };
+    for (const s of L) if (/주문|결제\s*일|구매\s*일|order/i.test(s) && !/도착/.test(s)) { const d = fullDate(s); if (d) { r.date = d; break; } }
+    if (!r.date) for (const s of L) if (/주문/.test(s)) { const m = s.match(/(\d{1,2})\s*[.\/월]\s*(\d{1,2})\s*[.일]?\s*(?:\([월화수목금토일]\))?\s*주문/); if (m) { r.date = ymd(Y, m[1], m[2]); if (r.date) break; } }
+    if (!r.date) for (const s of L) { if (/도착|배송|출발/.test(s)) continue; const d = fullDate(s); if (d) { r.date = d; break; } }
+    if (!r.date && /^20\d{6}/.test(r.orderNo)) r.date = ymd(r.orderNo.slice(0, 4), r.orderNo.slice(4, 6), r.orderNo.slice(6, 8));
+    if (r.date && (new Date(r.date) - now > 3 * 864e5 || now - new Date(r.date) > 400 * 864e5)) r.date = "";
+    r.orderedAt = r.date;
+
+    // 도착 예정일
+    for (const s of L) {
+      if (!/도착|배송\s*예정|배달\s*예정/.test(s)) continue;
+      let d = fullDate(s);
+      if (!d) { const m = s.match(/(\d{1,2})\s*[.\/월]\s*(\d{1,2})\s*[.일]?\s*(?:\(\s*[월화수목금토일]\s*\))?/); if (m) d = ymd(Y, m[1], m[2]); }
+      if (d) {
+        const od = r.date ? new Date(r.date) : now;
+        if (new Date(d) < od - 60 * 864e5) d = ymd(+d.slice(0, 4) + 1, d.slice(5, 7), d.slice(8, 10));
+        r.eta = d; break;
+      }
+    }
+    // 상태
+    if (/배송\s*중|배송\s*시작|배달\s*출발|이동\s*중|간선|집화|출고\s*완료|발송\s*완료|출발/.test(all)) r.status = "배송중";
+    else if (/배송\s*완료|배달\s*완료|도착\s*완료/.test(all)) r.status = "도착";
+    // 택배사·운송장
+    for (const [name, re] of COURIERS) if (re.test(all)) { r.courier = name; break; }
+    const trackFrom = (s) => {
+      const m = s.match(/(?:운송장|송장)\s*(?:번호)?\s*[:：]?\s*([0-9][0-9\s\-]{8,22}[0-9]|[A-Z]{2}\d{9}[A-Z]{2}|[A-Z]{2,4}\d{8,18})/);
+      if (!m) return "";
+      const v = /[A-Z]/.test(m[1]) ? m[1] : m[1].replace(/\D/g, "");
+      return v.length >= 9 && v.length <= 20 ? v : "";
+    };
+    for (let i = 0; i < L.length && !r.trackingNo; i++) {
+      if (!/운송장|송장/.test(L[i])) continue;
+      r.trackingNo = trackFrom(L[i]) || (L[i + 1] ? trackFrom("송장 " + L[i + 1]) : "");
+    }
+    if (!r.trackingNo && r.courier) for (const s of L) {
+      if (!COURIERS.some(([, re]) => re.test(s))) continue;
+      const m = s.match(/\b(\d{4}[\s\-]?\d{4}[\s\-]?\d{2,6})\b/); if (m) { const v = m[1].replace(/\D/g, ""); if (v.length >= 10 && v.length <= 14) { r.trackingNo = v; break; } }
+    }
+
+    // 결제 금액
+    const AMT = [/최종\s*결제\s*금액|최종\s*결제/, /총\s*결제\s*금액|총\s*결제/, /결제\s*금액|실\s*결제|결제하신\s*금액|결제\s*예정\s*금액/, /총\s*주문\s*금액|주문\s*금액|총\s*금액|합\s*계|total/i];
+    const amtOf = (i) => { let m = moneyIn(L[i]); if (!m.length && L[i + 1] && !P_LABEL.test(L[i + 1])) m = moneyIn(L[i + 1]); return m.length ? Math.abs(m[m.length - 1].v) : 0; };
+    for (const re of AMT) { for (let i = 0; i < L.length && !r.amount; i++) if (re.test(L[i])) r.amount = amtOf(i); if (r.amount) break; }
+    let goods = 0;
+    for (let i = 0; i < L.length && !goods; i++) if (/(총\s*)?상품\s*(금액|가격)(?!\s*\()/.test(L[i]) && !/수량/.test(L[i])) goods = amtOf(i);
+
+    // 가게 이름 (끝에 '>'가 붙은 줄)
+    const stores = [];
+    const isStore = (s) => /^[^<].{0,30}?\s*>\s*$/.test(s) && !P_LABEL.test(s) && !P_STATUS.test(s);
+    L.forEach((s) => { if (isStore(s)) { const n = s.replace(/\s*>\s*$/, "").trim(); if (n.length >= 2 && !stores.includes(n)) stores.push(n); } });
+
+    // 품목: 요약(결제 정보) 줄이 아닌, 금액이 있는 줄마다 근처에서 상품명을 찾는다
+    const isSummary = (s) => /상품\s*(금액|가격)|배송비|할인|쿠폰|적립|포인트|결제|주문\s*금액|합\s*계|총\s|총[가-힣]|머니|카드|일시불|할부|환불|부가세|공급가|면세|과세|캐시|예치금|페이|total|subtotal/i.test(s) && !/\(\s*\d+\s*개\s*\)/.test(s);
+    const isOption = (s) => /^(옵션|수량|선택|구성|규격|사이즈|색상|컬러)\s*[:：]?/.test(s) || /^\(?\s*\d{1,5}\s*개\s*\)?$/.test(s) || /\(\s*\d+\s*개\s*\)\s*\d+\s*개/.test(s) || (/\d+\s*개(?!입)/.test(s) && s.replace(/[^가-힣A-Za-z]/g, "").length <= 8 && !/\d+\s*원/.test(s));
+    const isBreak = (s) => P_LABEL.test(s) || P_STATUS.test(s) || P_BTN.test(s) || isStore(s) || /^<|주문\s*번호|운송장|^\d{1,2}\s*[.\/]\s*\d{1,2}|\d{10,}/.test(s);
+    const used = new Set(), priceLines = [];
+    L.forEach((s, i) => { const m = moneyIn(s).filter((x) => x.v > 0); if (m.length && !isSummary(s) && !/^[-+]/.test(s.trim())) priceLines.push({ i, m }); });
+    const priceIdx = new Set(priceLines.map((p) => p.i));
+    const ownTextCount = {};
+    const ownText = (s, m) => stripName(s.slice(0, m[0].i).replace(P_STATUS, " ").replace(/[()\d,\s·\-]+$/, ""));
+    priceLines.forEach(({ i, m }) => { const t = ownText(L[i], m); if (t) ownTextCount[t] = (ownTextCount[t] || 0) + 1; });
+    const items = [];
+    for (const { i, m } of priceLines) {
+      const s = L[i];
+      // 할인율(%)이 있으면 마지막 금액, 아니면 첫 금액이 실제 가격 (취소선 원가·배송비 칸 무시)
+      const price = /\d+\s*%/.test(s) ? m[m.length - 1].v : m[0].v;
+      const opts = [], optIdx = [];
+      // 위쪽으로: 옵션 줄은 모으고, 상품명 줄은 최대 3줄까지 이어 붙인다
+      const up = [];
+      for (let j = i - 1; j >= 0 && j >= i - 6; j--) {
+        const t = L[j];
+        if (used.has(j) || priceIdx.has(j)) break;
+        if (isOption(t)) { opts.push(t); optIdx.push(j); continue; }
+        if (isBreak(t) || isSummary(t)) break;
+        if (/^\d+(\.\d+)?\s*(m|mm|cm|kg|g|L|ml|개입|P|EA|매|장)\b\s*$/i.test(t) && !up.length) { up.unshift(j); continue; }
+        if (nameScore(t) < 0.5) { if (up.length) break; continue; }
+        up.unshift(j); if (up.length >= 3) break;
+      }
+      const down = [];
+      for (let j = i + 1; j < L.length && j <= i + 3; j++) {
+        const t = L[j];
+        if (used.has(j) || priceIdx.has(j)) break;
+        if (isOption(t)) { opts.push(t); optIdx.push(j); continue; }
+        if (isBreak(t) || isSummary(t)) break;
+        if (nameScore(t) < 0.5) break;
+        down.push(j); if (down.length >= 2) break;
+      }
+      const own = ownText(s, m);
+      const cands = [];
+      if (up.length) cands.push({ idx: up, text: up.map((j) => L[j]).join(" "), bonus: 1 });
+      if (down.length) cands.push({ idx: down, text: down.map((j) => L[j]).join(" "), bonus: 0 });
+      if (own && !(ownTextCount[own] > 1) && !stores.includes(own)) cands.push({ idx: [], text: own, bonus: 0.5 });
+      cands.forEach((c) => (c.sc = nameScore(stripName(c.text)) + c.bonus));
+      cands.sort((a, b) => b.sc - a.sc);
+      const pick = cands[0]; if (!pick || pick.sc < 1) continue;
+      pick.idx.forEach((j) => used.add(j)); optIdx.forEach((j) => used.add(j)); used.add(i);
+      // 가격 줄의 글자가 여러 품목에 반복되면 가게 이름
+      if (own && ownTextCount[own] > 1 && !stores.includes(own) && nameScore(own) > 0) stores.push(own);
+      let name = stripName(pick.text);
+      const q = qtyIn([...opts].reverse().join(" ")) || qtyIn(s.slice(m[0].end)) || qtyIn(s.replace(/\d{1,3}(?:,\d{3})+\s*원/g, " ")) || qtyIn((pick.text.match(/\(\s*\d+\s*개\s*\)\s*$/) || [""])[0]) || 1;
+      let spec = specIn(name);
+      if (spec) name = stripName(name.replace(/\bM\s?\d{1,2}(?:\.\d)?(?:\s*[x×X*]\s*\d+(?:\.\d+)?)?(?:\s*mm)?\b/, " "));
+      if (!spec) {
+        const o = opts.map((t) => t.replace(/^(옵션|선택|구성|규격|사이즈)\s*[:：]?\s*/, "").replace(/\(?\s*\d+\s*개\s*\)?/g, " ").replace(/[\/·,]+/g, " ").replace(/낱개\s*구매|구매|선택|기본|단품/g, " ").trim()).filter((t) => /\d/.test(t) && t.length <= 30);
+        if (o.length) spec = o[0].replace(/\s{2,}/g, " ").trim();
+      }
+      if (name.length < 2) continue;
+      items.push({ name: name.slice(0, 80), spec, qty: q, price, sameLineQty: /원\s*[·x×]\s*\d+\s*개/.test(s) });
+    }
+    // 금액이 줄 합계인지 1개 가격인지: 상품 금액 합계와 더 가까운 쪽
+    const sumLine = items.reduce((a, x) => a + x.price, 0), sumUnit = items.reduce((a, x) => a + x.price * x.qty, 0);
+    const ref = goods || r.amount;
+    let perUnit = false;
+    if (ref && sumLine !== sumUnit) perUnit = Math.abs(sumUnit - ref) < Math.abs(sumLine - ref);
+    else if (!ref) perUnit = items.length > 0 && items.every((x) => x.sameLineQty);
+    const seen = new Set();
+    for (const x of items) {
+      const key = x.name + "|" + x.price; if (seen.has(key)) continue; seen.add(key);
+      const unitPrice = perUnit ? x.price : Math.round(x.price / Math.max(1, x.qty));
+      const full = `${x.name} ${x.spec}`;
+      r.items.push({ name: x.name, spec: x.spec, category: catOf(full), group: groupOf(full), qty: x.qty, unit: unitOf(x.name), unitPrice });
+    }
+    // 가격이 안 보이는 화면(배송 조회 등): 옵션·수량 줄 바로 위의 상품명
+    if (!r.items.length) L.forEach((t, i) => {
+      if (used.has(i) || !isOption(t) || isSummary(t)) return;
+      const up = [];
+      for (let j = i - 1; j >= 0 && j >= i - 4; j--) {
+        const u = L[j]; if (used.has(j) || isOption(u) || isBreak(u) || isSummary(u) || priceIdx.has(j)) break;
+        if (nameScore(u) < 0.5) { if (up.length) break; continue; }
+        up.unshift(j); if (up.length >= 3) break;
+      }
+      if (!up.length) return;
+      let name = stripName(up.map((j) => L[j]).join(" ")); if (nameScore(name) < 1.5) return;
+      up.forEach((j) => used.add(j)); used.add(i);
+      let spec = specIn(name); if (spec) name = stripName(name.replace(/\bM\s?\d{1,2}(?:\.\d)?(?:\s*[x×X*]\s*\d+(?:\.\d+)?)?(?:\s*mm)?\b/, " "));
+      const full = `${name} ${spec}`;
+      r.items.push({ name: name.slice(0, 80), spec, category: catOf(full), group: groupOf(full), qty: qtyIn(t) || 1, unit: unitOf(name), unitPrice: 0 });
+    });
+    // 가격 없이 '상품명: …' 형태(문자 안내 등)
+    if (!r.items.length) for (const s of L) {
+      const m = s.match(/상품\s*명?\s*[:：]\s*(.+)/); if (!m) continue;
+      for (const part of m[1].split(/\s*(?:,|외)\s*/)) {
+        const q = qtyIn(part) || 1, name = stripName(part.replace(/\d+\s*(개|EA|ea|세트)(?![가-힣A-Za-z]).*$/, "").replace(/(송장|운송장|주문\s*번호|도착).*$/, ""));
+        if (nameScore(name) >= 1) { const spec = specIn(name); r.items.push({ name, spec, category: catOf(name), group: groupOf(name), qty: q, unit: unitOf(name), unitPrice: 0 }); }
+      }
+    }
+    r.vendor = stores.slice(0, 3).join(", ");
+    r._goods = goods;
+    return r;
   }
 
   // ---------- 개인정보 가리기 ----------
@@ -2245,8 +2624,15 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
   const maskPt = (it, e) => { const b = it.c.getBoundingClientRect(); return { x: Math.min(Math.max((e.clientX - b.left) / b.width, 0), 1), y: Math.min(Math.max((e.clientY - b.top) / b.height, 0), 1) }; };
   const normRect = (a, b) => ({ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) });
   async function exportMasked() {
-    const out = [];
+    const out = [], ocr = [];
     for (const it of MASK.items) {
+      // 글자 인식용: 원본 해상도(가로 최대 2400px)에 가린 곳을 칠한 사진. 이 기기 메모리에만 있고 저장하지 않는다
+      const OW = Math.min(it.bmp.width, 2400), OH = Math.round(it.bmp.height * OW / it.bmp.width);
+      const oc = document.createElement("canvas"); oc.width = OW; oc.height = OH;
+      const octx = oc.getContext("2d"); octx.drawImage(it.bmp, 0, 0, OW, OH); octx.fillStyle = "#000";
+      for (const r of it.rects) octx.fillRect(Math.floor(r.x * OW) - 3, Math.floor(r.y * OH) - 3, Math.ceil(r.w * OW) + 6, Math.ceil(r.h * OH) + 6);
+      ocr.push({ canvas: oc, rects: it.rects.map((r) => ({ ...r })) });
+      // 영수증 저장용: 너비 900px, 세로 1400px씩
       const W = Math.min(it.bmp.width, 900), H = Math.round(it.bmp.height * W / it.bmp.width);
       const full = document.createElement("canvas"); full.width = W; full.height = H;
       const ctx = full.getContext("2d"); ctx.drawImage(it.bmp, 0, 0, W, H); ctx.fillStyle = "#000";
@@ -2260,7 +2646,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
         if (y + h >= H) break;
       }
     }
-    return out;
+    return { blobs: out, ocr };
   }
 
   // ---------- AI 질문 ----------
@@ -2381,8 +2767,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
   photoInput("#rPhoto", "#rPhotoPrev", "retPhoto", "둔 자리");
   $("#bReceipt").addEventListener("change", (e) => {
     const f = [...e.target.files]; e.target.value = "";
-    if (sample) buyAiPhotos(f, true); // 영수증도 개인정보를 가린 뒤 저장하고, 품목이 비어 있으면 자동으로 채운다
-    else { S.bReceipts.push(...f); renderReceipts(); }
+    buyAiPhotos(f, true); // 영수증도 개인정보를 가린 뒤 저장하고, 품목이 비어 있으면 자동으로 채운다
   });
   $("#bReceipts").addEventListener("click", (e) => {
     const b = e.target.closest("[data-rmrec]"), bi = e.target.closest("[data-rmrecid]");
@@ -2421,7 +2806,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
       const n = MASK.items.reduce((s2, it) => s2 + it.rects.length, 0);
       if (!n && !MASK.warned) { MASK.warned = true; $("#maskHint").textContent = "가린 곳이 없습니다. 이름·전화번호·주소가 안 보이는 사진이면 한 번 더 누르세요."; return; }
       b.disabled = true;
-      try { const blobs = await exportMasked(); const res = MASK.resolve; MASK.resolve = null; $("#maskDlg").close(); res?.(blobs); }
+      try { const got = await exportMasked(); const res = MASK.resolve; MASK.resolve = null; $("#maskDlg").close(); res?.(got); }
       finally { b.disabled = false; }
     }
   });
