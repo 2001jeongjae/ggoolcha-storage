@@ -37,14 +37,14 @@ head_end = app.index("</style>") + len("</style>")
 head, body = app[:head_end], app[head_end:]
 
 gate_css = """<style>
-#ggGate { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(3px); }
-#ggGate .gg-card { width: min(420px, 100%); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 22px; display: grid; gap: 12px; }
-#ggGate h2 { font-family: var(--font-display); font-weight: 400; font-size: 28px; letter-spacing: 0.5px; margin: 0; }
+#ggGate { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--band) 88%, transparent); backdrop-filter: blur(4px); }
+#ggGate .gg-card { width: min(420px, 100%); background: var(--surface); color: var(--ink); border-radius: 12px; border-top: 6px solid var(--honey); box-shadow: var(--shadow); padding: 22px; display: grid; gap: 12px; }
+#ggGate h2 { font-family: var(--font-wordmark); font-weight: 800; font-size: 34px; line-height: 1; letter-spacing: 0.01em; margin: 0; transform: skewX(-10deg); transform-origin: left bottom; }
 #ggGate p { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.6; }
 #ggGate form { display: grid; gap: 8px; }
 #ggGate label { font-size: 13px; font-weight: 600; color: var(--ink-2); }
 #ggGate input { font: inherit; padding: 10px 12px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); }
-#ggGate button { font: inherit; font-weight: 600; padding: 10px 14px; border-radius: var(--r); border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+#ggGate button { font: inherit; font-weight: 700; padding: 10px 14px; border-radius: var(--r); border: 1px solid var(--honey); background: var(--honey); color: var(--graphite); cursor: pointer; }
 #ggGate button:disabled { opacity: 0.6; cursor: wait; }
 #ggGate .gg-err { min-height: 1.4em; color: var(--danger); font-size: 13px; }
 </style>
@@ -69,7 +69,8 @@ out = f"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="꿀차 EV 자작차 동아리의 부품·공구·소모품 재고와 사용 기록">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231e6b45'/%3E%3Cpath d='M8 12h16v12H8zM11 8h10v4H11z' fill='none' stroke='white' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#1f252b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 1.5 36 10.75v18.5L20 38.5 4 29.25v-18.5z' fill='%23f6b21b'/%3E%3Cpath d='M20 9.6 29 14.8v10.4L20 30.4l-9-5.2V14.8z' fill='none' stroke='%231f252b' stroke-width='2.6' stroke-linejoin='round'/%3E%3Ccircle cx='20' cy='20' r='4' fill='%231f252b'/%3E%3C/svg%3E">
 {head.strip()}
 {gate_css}
 <script>

@@ -4,7 +4,7 @@
 //  - db     → Firestore 컬렉션 items / loans / purchases / ships
 //  - assets → 사진을 줄여서 Firestore photos 컬렉션에 저장 (Storage 유료 요금제 없이)
 //  - user   → 기기별 익명 로그인 id
-//  - sample → Firebase AI Logic(Gemini Developer API, 무료)로 주문 화면 사진 읽기
+//  - sample → 우리 Vercel 서버(/api/read-order)가 Gemini(무료)로 주문 화면 사진을 읽어 준다
 // 탭을 새로 열 때마다 '동아리 입장 코드'를 다시 넣어야 하고, 보안 규칙은
 // members 명단에 적힌 코드가 지금 입장 코드와 같은 기기만 읽고 쓰게 막는다.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -14,11 +14,10 @@ import {
   collection, doc, query, where, orderBy, limit, onSnapshot,
   getDocs, getDoc, getDocFromCache, addDoc, setDoc, updateDoc, deleteDoc,
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
-import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js";
 
 const PX = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 const photoCache = new Map(), photoWait = new Set();
-let fs = null, uid = null, fbApp = null;
+let fs = null, uid = null, fbUser = null;
 
 // ---------- 오류 코드: Firestore → 화면 코드가 아는 이름 ----------
 function mapErr(e) {
@@ -118,22 +117,16 @@ window.__ggPhoto = (id) => {
   return `${PX}#p=${id}`;
 };
 
-// ---------- AI: 주문 화면 사진 읽기 (Gemini) ----------
+// ---------- AI: 주문 화면 사진 읽기 ----------
 // 화면 코드는 claude.ai의 sample.json(프롬프트, {images})와 같은 모양으로 부른다.
-const AI_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite"]; // 앞의 것이 안 되면 다음 것
-let aiModels = null;
-function getModels() {
-  if (!aiModels) {
-    const ai = getAI(fbApp, { backend: new GoogleAIBackend() });
-    aiModels = AI_MODELS.map((model) => getGenerativeModel(ai, { model, generationConfig: { responseMimeType: "application/json", temperature: 0 } }));
-  }
-  return aiModels;
+// 사진은 우리 서버(/api/read-order)로 보내고, 서버가 Gemini API 키로 읽은 결과만 돌려준다.
+// 서버는 입장 코드를 맞힌 기기의 로그인 토큰이 있어야 받아 준다.
+async function toJpegPart(b) {
+  // 서버 한 번에 보낼 수 있는 크기(약 4MB)를 넘지 않게 한 장씩 다시 줄인다
+  let url = await toJpegDataUrl(b, 1600, 0.82);
+  if (url.length > 900000) url = await toJpegDataUrl(b, 1280, 0.7);
+  return { data: url.split(",")[1], mimeType: "image/jpeg" };
 }
-const blobToPart = (b) => new Promise((res, rej) => {
-  const r = new FileReader();
-  r.onload = () => res({ inlineData: { data: String(r.result).split(",")[1], mimeType: b.type || "image/jpeg" } });
-  r.onerror = rej; r.readAsDataURL(b);
-});
 function parseJson(t) {
   const s = String(t || "").replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
   try { return JSON.parse(s); } catch {}
@@ -141,25 +134,32 @@ function parseJson(t) {
   if (a >= 0 && z > a) return JSON.parse(s.slice(a, z + 1));
   throw Object.assign(new Error("not json"), { code: "invalid_json" });
 }
-function mapAiErr(e) {
-  const m = String(e?.message || e || "");
-  const code = /429|quota|exhausted|rate/i.test(m) ? "rate_limited" : /403|PERMISSION|not been used|disabled|API key/i.test(m) ? "sampling_disabled" : "upstream_error";
-  return Object.assign(new Error(m), { code, cause: e });
-}
-const sample = Object.assign(async () => { throw Object.assign(new Error("text only"), { code: "invalid_request" }); }, {
+const aiError = (code, msg) => Object.assign(new Error(msg || code), { code });
+const sample = Object.assign(async () => { throw aiError("invalid_request", "text only"); }, {
   photosOnly: true, // 재고 질문(이름이 담긴 기록을 보내는 기능)은 이 버전에서 쓰지 않는다
   limits: async () => ({ maxPromptBytes: 262144, images: { maxCount: 6, maxInputBytes: 20000000, mediaTypes: ["image/jpeg", "image/png", "image/webp"] } }),
   async json(input, opts = {}) {
-    const text = typeof input === "string" ? input : (input || []).map((m) => m.content).join("\n\n");
+    const prompt = typeof input === "string" ? input : (input || []).map((m) => m.content).join("\n\n");
     const imgs = opts.images ? (opts.images instanceof Blob ? [opts.images] : [...opts.images]) : [];
-    const parts = [text, ...(await Promise.all(imgs.map(blobToPart)))];
-    let last = null;
-    for (const model of getModels()) {
-      if (opts.signal?.aborted) throw Object.assign(new Error("cancelled"), { code: "cancelled" });
-      try { const r = await model.generateContent(parts); return parseJson(r.response.text()); }
-      catch (e) { last = e; if (e?.code === "invalid_json") break; }
-    }
-    throw last?.code === "invalid_json" ? last : mapAiErr(last);
+    const images = [];
+    let total = 0;
+    for (const b of imgs.slice(0, 6)) { const part = await toJpegPart(b); total += part.data.length; if (total > 3800000) break; images.push(part); }
+    if (opts.signal?.aborted) throw aiError("cancelled");
+    let r;
+    try {
+      const token = await fbUser.getIdToken();
+      r = await fetch("/api/read-order", {
+        method: "POST", signal: opts.signal,
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ prompt, images }),
+      });
+    } catch (e) { throw aiError(opts.signal?.aborted ? "cancelled" : "upstream_error", String(e?.message || e)); }
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 429) throw aiError("rate_limited", j?.error);
+    if (r.status === 401 || r.status === 403) throw aiError("not_granted", j?.error);
+    if (r.status === 503 || j?.error === "no_key") throw aiError("sampling_disabled", j?.error);
+    if (!r.ok) throw aiError("upstream_error", j?.error || String(r.status));
+    return parseJson(j.text);
   },
 });
 
@@ -223,7 +223,6 @@ async function boot() {
     return NONE;
   }
   const app = initializeApp(cfg);
-  fbApp = app;
   const auth = getAuth(app);
   try { fs = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }
   catch { fs = initializeFirestore(app, {}); }
@@ -241,7 +240,7 @@ async function boot() {
       return NONE;
     }
   }
-  uid = u.uid;
+  uid = u.uid; fbUser = u;
 
   // 입장 코드: 이 탭에서 이미 맞혔으면(새로고침) 넘어가고, 새 창·새 탭이면 다시 묻는다
   const KEY = "gg-ok-" + uid;
