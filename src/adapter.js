@@ -1,4 +1,4 @@
-// GGOOLCHA STORAGE 독립 배포용 연결부
+// STORAGE 독립 배포용 연결부
 // 화면 코드는 claude.ai용과 똑같이 두고, 그 밑에서 쓰던 저장소(window.claude)를
 // Google Firebase(Firestore 데이터베이스 + 익명 로그인)로 바꿔 끼운다.
 //  - db     → Firestore 컬렉션 items / loans / purchases / ships
@@ -180,7 +180,7 @@ function overlay(html) {
     el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "ggGateTitle");
     document.body.appendChild(el);
   }
-  el.innerHTML = `<div class="gg-card"><h2 id="ggGateTitle">GGOOLCHA STORAGE</h2>${html}</div>`;
+  el.innerHTML = `<div class="gg-card"><h2 id="ggGateTitle">STORAGE</h2>${html}</div>`;
   return el;
 }
 const closeOverlay = () => document.getElementById("ggGate")?.remove();
