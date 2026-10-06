@@ -1431,13 +1431,14 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
   }
 
   const recMap = new Map();
+  const AUTO_NOTE = /^(전체 품목에서 조정|편집에서 수량 수정|같은 품목을 다시 등록|새 품목 등록|구매·입고)/;
   const delBtn = (l) => S.canWrite && l.id ? `<button class="rec-del" type="button" data-delrec="${esc(l.id)}" aria-label="${esc(l.itemName)} 기록 삭제">삭제</button>` : "";
   function recHtml(l, withName = true) {
     if (l.id) recMap.set(l.id, l);
     if (l.kind === "조정") {
       const head = `<span class="kind adj">${l.dir > 0 ? "수량 추가" : "수량 제거"}</span>`;
       return `<div class="hist-item" data-rec="${esc(l.id || "")}"><div>${withName ? `<div style="font-weight:600">${head}${esc(l.itemName)}</div>` : `<div>${head}</div>`}
-        <div class="line"><b>${esc(person(l.team, l.role, l.name) || "기록 없음")}</b> ${l.dir > 0 ? "+" : "−"}${esc(l.qty)}개 · 총 ${esc(l.before)} → ${esc(l.after)}개 · ${fmtDT(l.borrowedAt)}${l.note ? ` · ${esc(l.note)}` : ""}</div></div><div class="hist-side">${delBtn(l)}</div></div>`;
+        <div class="line"><b>${esc(person(l.team, l.role, l.name) || "기록 없음")}</b> ${l.dir > 0 ? "+" : "−"}${esc(l.qty)}개 · 총 ${esc(l.before)} → ${esc(l.after)}개 · ${fmtDT(l.borrowedAt)}${l.note && !AUTO_NOTE.test(l.note) ? ` · ${esc(l.note)}` : ""}</div></div><div class="hist-side">${delBtn(l)}</div></div>`;
     }
     const k = kindOf(l), K = KIND[k] || KIND.부품;
     const head = `<span class="kind ${K.cls}">${esc(k === "소모품" ? "사용" : k === "공구" ? "공구" : "장착")}</span>`;
@@ -1598,7 +1599,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
       const cur = pendingQty.get(id);
       try {
         await db.doc("items/" + id).update({ qty: cur.qty, updatedAt: Date.now(), updatedBy: S.me });
-        if (cur.qty !== cur.base) await logAdjust(it, cur.base, cur.qty, "전체 품목에서 조정").catch(() => {});
+        if (cur.qty !== cur.base) await logAdjust(it, cur.base, cur.qty, "").catch(() => {});
       } catch (e) { writeFailed(e, "수량 저장"); }
       if (pendingQty.get(id) === cur) pendingQty.delete(id);
       render();
@@ -1664,12 +1665,12 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
         updatedAt: Date.now(), updatedBy: S.me,
       };
       const now = Date.now(), who = (p) => person(p.t, p.r, p.n);
-      const lastUse = (before, after, why, p) => ({ action: `${after > before ? "수량 추가" : "수량 제거"}(${why})`, who: who(p), at: now, qty: Math.abs(after - before) });
+      const lastUse = (before, after, _why, p) => ({ action: after > before ? "수량 추가" : "수량 제거", who: who(p), at: now, qty: Math.abs(after - before) });
       if (S.editing) {
         const it = S.editing, before = qtyOf(it), after = body.qty;
         pendingQty.delete(it.id);
         await db.doc("items/" + it.id).update({ ...body, ...(after !== before ? { lastUse: lastUse(before, after, "편집", who0) } : {}) });
-        if (after !== before) await logAdjust({ ...it, ...body, id: it.id }, before, after, "편집에서 수량 수정", who0, now).catch(() => {});
+        if (after !== before) await logAdjust({ ...it, ...body, id: it.id }, before, after, "", who0, now).catch(() => {});
         toast(after !== before ? `저장했습니다. 수량 ${before} → ${after}${body.unit || "개"} (최근 기록에 남김)` : "저장했습니다.");
       } else {
         const same = findSame(name, body.spec);
@@ -1677,11 +1678,11 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
           const before = qtyOf(same), nq = before + body.qty;
           pendingQty.delete(same.id);
           await db.doc("items/" + same.id).update({ qty: nq, updatedAt: now, updatedBy: S.me, ...(photo && !same.photo ? { photo } : {}), ...(body.qty ? { lastUse: lastUse(before, nq, "같은 품목 등록", who0) } : {}) });
-          if (body.qty) await logAdjust(same, before, nq, "같은 품목을 다시 등록", who0, now).catch(() => {});
+          if (body.qty) await logAdjust(same, before, nq, "", who0, now).catch(() => {});
           toast(`이미 있는 ‘${same.name}’에 ${body.qty}${same.unit || "개"}를 더했습니다. 총 ${nq}${same.unit || "개"}`);
         } else {
           const ref = await db.collection("items").add({ ...body, createdAt: now, createdBy: S.me, ...(body.qty ? { lastUse: lastUse(0, body.qty, "새 품목 등록", who0) } : {}) });
-          if (body.qty) await logAdjust({ id: ref.id, name, category: body.category }, 0, body.qty, "새 품목 등록", who0, now).catch(() => {});
+          if (body.qty) await logAdjust({ id: ref.id, name, category: body.category }, 0, body.qty, "", who0, now).catch(() => {});
           toast(`‘${name}’을(를) 등록했습니다.`);
         }
       }
@@ -1763,7 +1764,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
     const k = l.kind === "조정" ? "조정" : kindOf(l), K = KIND[k] || KIND.부품;
     const what = k === "조정" ? `${l.dir > 0 ? "수량 추가" : "수량 제거"} ${l.dir > 0 ? "+" : "−"}${l.qty}개`
       : k === "소모품" ? `사용 ${l.qty}개` : `${K.start} ${l.qty}개${l.open ? ` (아직 ${K.open})` : ` → ${K.endDone}`}`;
-    $("#rdWhat").innerHTML = `<b>${esc(l.itemName)}</b> · ${esc(what)}<div class="hint" style="margin-top:2px">${esc(person(l.team, l.role, l.name) || "기록 없음")} · ${fmtDT(l.borrowedAt)}${l.note ? ` · ${esc(l.note)}` : ""}</div>`;
+    $("#rdWhat").innerHTML = `<b>${esc(l.itemName)}</b> · ${esc(what)}<div class="hint" style="margin-top:2px">${esc(person(l.team, l.role, l.name) || "기록 없음")} · ${fmtDT(l.borrowedAt)}${l.note && !AUTO_NOTE.test(l.note) ? ` · ${esc(l.note)}` : ""}</div>`;
     const ef = recEffect(l), unit = ef.it?.unit || "개";
     $("#rdRevertRow").hidden = !(ef.it && ef.delta);
     $("#rdRevert").checked = true;
@@ -2008,7 +2009,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
       const receipts = [...S.bReceiptIds];
       for (const f of S.bReceipts) { const id = await uploadPhoto(f); if (id) receipts.push(id); }
       const now = Date.now(), by = person(w.t, w.r, w.n);
-      const wp = w.n ? w : null, vendor = $("#bVendor").value.trim(), why = `구매·입고${vendor ? ` · ${vendor}` : ""}`.slice(0, 60);
+      const wp = w.n ? w : null;
       const outLines = []; let added = 0, merged = 0;
       for (const l of lines) {
         const same = findSame(l.name, l.spec);
@@ -2017,7 +2018,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
           pendingQty.delete(same.id);
           const before = qtyOf(same);
           await db.doc("items/" + same.id).update({ qty: nq, updatedAt: now, updatedBy: S.me, ...(l.unitPrice ? { lastUnitPrice: l.unitPrice } : {}), ...(team && !same.team ? { team } : {}) });
-          await logAdjust(same, before, nq, why, wp, now).catch(() => {});
+          await logAdjust(same, before, nq, "", wp, now).catch(() => {});
           same.qty = nq;
           outLines.push({ ...l, itemId: same.id, merged: true }); merged++;
         } else {
@@ -2026,7 +2027,7 @@ ready.then((api) => window.__ggBootResolve && window.__ggBootResolve(api));
             description: l.description || l.usage || "", team, minQty: 0, photo: locPhoto, ...(l.unitPrice ? { lastUnitPrice: l.unitPrice } : {}),
             createdAt: now, createdBy: S.me, updatedAt: now, updatedBy: S.me,
           });
-          await logAdjust({ id: ref.id, name: l.name, category: l.category }, 0, l.qty, `${why} (새 품목)`.slice(0, 60), wp, now).catch(() => {});
+          await logAdjust({ id: ref.id, name: l.name, category: l.category }, 0, l.qty, "", wp, now).catch(() => {});
           S.items.push({ id: ref.id, name: l.name, spec: l.spec, qty: l.qty });
           outLines.push({ ...l, itemId: ref.id }); added++;
         }
