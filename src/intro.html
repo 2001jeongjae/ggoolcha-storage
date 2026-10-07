@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STORAGE 소개 · 동아리 부품 창고 관리</title>
+<meta name="description" content="자작차·로봇·메이커 동아리의 부품·공구·소모품 재고와 사용 기록, 구매·배송, 지원금 정산을 한곳에서. 동아리마다 전용 주소와 입장 코드로 따로 씁니다.">
+<meta name="theme-color" content="#14151b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='19.5' fill='%230b0b10'/%3E%3Ccircle cx='20' cy='20' r='13.2' fill='none' stroke='%23e10600' stroke-width='3.4' stroke-dasharray='34.6 6.9' transform='rotate(-62 20 20)'/%3E%3Ccircle cx='20' cy='20' r='7.6' fill='%23c9ccd3'/%3E%3Ccircle cx='20' cy='20' r='2.6' fill='%230b0b10'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Titillium+Web:ital,wght@0,600;0,700;1,600;1,700&display=swap">
+<style>
+:root {
+  --bg: #eceef1; --surface: #ffffff; --surface-2: #f4f5f7;
+  --ink: #15151e; --ink-2: #454a55; --muted: #666c78; --line: rgba(21, 21, 30, 0.12);
+  --red: #e10600; --red-ink: #c80500; --carbon: #15151e; --kerb-white: #f4f4f6;
+  --c-part: #19913f; --c-tool: #0a6cc2; --c-cons: #f2bf00; --focus: #0a6cc2;
+  --font-num: "Titillium Web", "IBM Plex Sans KR", sans-serif;
+  --font-sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e0f13; --surface: #17181f; --surface-2: #1f2028;
+    --ink: #eceef2; --ink-2: #b6bac4; --muted: #8b909c; --line: rgba(255, 255, 255, 0.1);
+    --red-ink: #ff6b5e; --c-part: #36c26a; --c-tool: #3d9ef0; --c-cons: #ffd23a; --focus: #6db4ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e0f13; --surface: #17181f; --surface-2: #1f2028;
+  --ink: #eceef2; --ink-2: #b6bac4; --muted: #8b909c; --line: rgba(255, 255, 255, 0.1);
+  --red-ink: #ff6b5e; --c-part: #36c26a; --c-tool: #3d9ef0; --c-cons: #ffd23a; --focus: #6db4ff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 16px; line-height: 1.65; word-break: keep-all; overflow-wrap: break-word; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.wrap { max-width: 1080px; margin-inline: auto; padding-inline: 16px; }
+h1, h2, h3 { margin: 0; line-height: 1.3; text-wrap: balance; }
+p { margin: 0; }
+
+/* 머리띠: 카본 피트월 + 연석 */
+.hero {
+  color: #f2f3f6; background-color: #14151b; border-top: 4px solid var(--red);
+  background-image:
+    linear-gradient(27deg, #191a21 5px, transparent 5px), linear-gradient(207deg, #191a21 5px, transparent 5px),
+    linear-gradient(27deg, #1c1d25 5px, transparent 5px), linear-gradient(207deg, #1c1d25 5px, transparent 5px),
+    linear-gradient(90deg, #17181e 10px, transparent 10px),
+    linear-gradient(#1a1b22 25%, #16171d 25%, #16171d 50%, transparent 50%, transparent 75%, #1d1e26 75%, #1d1e26);
+  background-position: 0 5px, 10px 0, 0 10px, 10px 5px, 0 0, 0 0; background-size: 20px 20px;
+}
+.hero::after { content: ""; display: block; height: 9px; background: repeating-linear-gradient(90deg, var(--red) 0 34px, var(--kerb-white) 34px 68px); }
+.hero-in { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 32px; align-items: center; padding-block: 40px 44px; }
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
+.brand svg { width: 40px; height: 40px; }
+.brand b { font-family: var(--font-num); font-style: italic; font-weight: 700; font-size: 30px; letter-spacing: 0.02em; color: #fff; }
+.hero h1 { font-size: clamp(28px, 4.2vw, 42px); font-weight: 700; letter-spacing: -0.02em; color: #fff; }
+.hero .lead { margin-top: 14px; color: #b7bbc6; font-size: 16.5px; max-width: 34em; }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 18px; border-radius: var(--r); border: 1px solid transparent; font: inherit; font-weight: 700; font-size: 15px; text-decoration: none; cursor: pointer; }
+.btn.primary { background: var(--red); color: #fff; }
+.btn.primary:hover { background: #c40500; }
+.btn.line { border-color: rgba(255, 255, 255, 0.35); color: #fff; }
+.btn.line:hover { border-color: #fff; }
+.btn:disabled { opacity: 0.6; cursor: wait; }
+.shot { border-radius: 8px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.14); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); background: #0b0b10; }
+.shot img { display: block; width: 100%; height: auto; }
+
+section.block { padding-block: 56px 8px; }
+.sec-title { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
+.sec-title::before { content: ""; width: 7px; height: 22px; flex: none; background: var(--red); transform: skewX(-18deg); }
+.sec-lead { margin-top: 8px; color: var(--ink-2); max-width: 40em; }
+
+/* 기능: 분류 색 = 타이어 컴파운드 */
+.features { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
+.feature { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px 20px 18px 24px; overflow: hidden; }
+.feature::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--tab, var(--ink-2)); }
+.feature h3 { font-size: 17.5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.feature p { margin-top: 6px; color: var(--ink-2); font-size: 15px; }
+.f-stock { --tab: var(--c-cons); } .f-tool { --tab: var(--c-tool); } .f-buy { --tab: var(--c-part); } .f-report { --tab: var(--red); }
+.pro-tag { font-family: var(--font-num); font-style: italic; font-weight: 700; font-size: 12px; line-height: 1; padding: 4px 7px 3px; border-radius: 3px; background: var(--carbon); color: #fff; }
+:root[data-theme="dark"] .pro-tag { background: #eceef2; color: var(--carbon); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pro-tag { background: #eceef2; color: var(--carbon); } }
+.report-shot { max-width: 680px; margin-top: 14px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
+.report-shot img { display: block; width: 100%; height: auto; }
+
+/* 요금: 타이밍 스트립처럼 */
+.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
+.plan { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 22px 22px 20px; display: grid; gap: 12px; align-content: start; }
+.plan.pro { border: 2px solid var(--carbon); }
+:root[data-theme="dark"] .plan.pro { border-color: #eceef2; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .plan.pro { border-color: #eceef2; } }
+.plan h3 { font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.price { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.price b { font-family: var(--font-num); font-style: italic; font-weight: 700; font-size: 40px; line-height: 1; letter-spacing: -0.01em; }
+.price span { color: var(--muted); font-size: 14px; }
+.plan ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 15px; color: var(--ink-2); }
+.plan li { padding-left: 18px; position: relative; }
+.plan li::before { content: ""; position: absolute; left: 2px; top: 0.62em; width: 8px; height: 8px; border-radius: 50%; background: radial-gradient(circle, #2b2c35 0 30%, var(--ring, var(--muted)) 32% 66%, #15151e 68%); }
+.plan.basic li { --ring: var(--c-tool); } .plan.pro li { --ring: var(--red); }
+.note { margin-top: 12px; color: var(--muted); font-size: 14px; }
+
+/* 진행 순서 */
+.steps { list-style: none; margin: 22px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; counter-reset: s; }
+.steps li { counter-increment: s; background: var(--surface); border: 1px solid var(--line); padding: 14px 16px 16px; position: relative; }
+.steps li::before { content: counter(s); display: block; font-family: var(--font-num); font-style: italic; font-weight: 700; font-size: 30px; line-height: 1; color: var(--red-ink); margin-bottom: 6px; }
+.steps b { display: block; font-size: 15.5px; }
+.steps span { display: block; color: var(--ink-2); font-size: 14px; margin-top: 2px; }
+
+/* 자주 묻는 질문 */
+.faq { margin-top: 18px; display: grid; gap: 8px; max-width: 760px; }
+.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; }
+.faq summary { cursor: pointer; font-weight: 600; }
+.faq details p { margin-top: 8px; color: var(--ink-2); font-size: 15px; }
+
+/* 신청 */
+.apply { margin-top: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; max-width: 760px; }
+.apply::before { content: ""; display: block; height: 7px; background: repeating-linear-gradient(90deg, var(--red) 0 26px, var(--kerb-white) 26px 52px); }
+.apply form { padding: 20px 22px 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+.field { display: grid; gap: 5px; min-width: 0; }
+.field.full { grid-column: 1 / -1; }
+label { font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.req { color: var(--red-ink); }
+input, select, textarea { font: inherit; font-size: 15px; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; width: 100%; }
+textarea { min-height: 90px; resize: vertical; }
+.consent { grid-column: 1 / -1; background: var(--surface-2); border-radius: var(--r); padding: 12px 14px; font-size: 14px; color: var(--ink-2); }
+.consent label { display: flex; gap: 8px; align-items: flex-start; color: var(--ink); font-weight: 600; margin-top: 8px; }
+.consent input { width: auto; margin-top: 4px; }
+.consent dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; }
+.consent dt { color: var(--muted); }
+.consent dd { margin: 0; }
+.form-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.msg { font-size: 14.5px; }
+.msg.ok { color: var(--c-part); font-weight: 600; }
+.msg.err { color: var(--red-ink); }
+
+footer { margin-top: 64px; padding-block: 22px 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+@media (max-width: 860px) {
+  .hero-in { grid-template-columns: minmax(0, 1fr); padding-block: 28px 32px; }
+  .features, .plans { grid-template-columns: minmax(0, 1fr); }
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .apply form { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .hero::after { background: repeating-linear-gradient(90deg, var(--red) 0 22px, var(--kerb-white) 22px 44px); }
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap hero-in">
+    <div>
+      <div class="brand">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#0b0b10" stroke="#3a3c47" stroke-width="1"/><circle cx="20" cy="20" r="13.2" fill="none" stroke="#e10600" stroke-width="2.6" stroke-dasharray="34.6 6.9" transform="rotate(-62 20 20)"/><circle cx="20" cy="20" r="8" fill="#c9ccd3"/><circle cx="20" cy="20" r="5.6" fill="#8d919b"/><circle cx="20" cy="20" r="2.4" fill="#0b0b10"/></svg>
+        <b>STORAGE</b>
+      </div>
+      <h1>동아리 창고에 무엇이 몇 개, 누가 쓰는 중인지 한 화면에서</h1>
+      <p class="lead">자작차·로봇·메이커 동아리를 위한 부품·공구·소모품 관리 사이트입니다. 재고와 사용 기록, 구매·배송, 지원금 정산까지 동아리 전용 주소와 입장 코드로 따로 씁니다.</p>
+      <div class="cta">
+        <a class="btn primary" href="#apply">설치 신청하기</a>
+        <a class="btn line" href="#pricing">요금 보기</a>
+      </div>
+    </div>
+    <div class="shot"><img src="/assets/intro-app.jpg" width="1200" height="759" alt="STORAGE 재고 화면: 위쪽에 품목·부족·공구 사용 중·부품 장착 중·배송 대기 숫자, 아래에 품목별 위치와 수량"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="block" aria-labelledby="featTitle">
+    <h2 class="sec-title" id="featTitle">하는 일</h2>
+    <p class="sec-lead">엑셀과 단톡방으로 흩어지던 창고 기록을 한곳에 모읍니다. 휴대폰에서도 앱 설치 없이 주소로 열립니다.</p>
+    <div class="features">
+      <article class="feature f-stock">
+        <h3>재고와 사용 기록</h3>
+        <p>품목마다 보관 위치를 사진으로 남기고, 쓰거나 채울 때마다 누가 몇 개를 바꿨는지 기록됩니다. 최소 수량 아래로 떨어진 소모품은 ‘구매 필요’에 자동으로 모입니다.</p>
+      </article>
+      <article class="feature f-tool">
+        <h3>공구 대여 · 부품 장착</h3>
+        <p>공구는 사용 시작과 완료, 부품은 차량 장착과 탈거로 기록해서 지금 누가 무엇을 쓰고 있는지 바로 보입니다. 분실·파손 수량도 함께 남습니다.</p>
+      </article>
+      <article class="feature f-buy">
+        <h3>구매 · 배송</h3>
+        <p>쇼핑몰 주문 화면을 캡처해 넣으면 구매일, 구매처, 금액, 품목이 채워집니다. 글자는 휴대폰·PC 안에서만 읽고, 이름·전화번호·주소는 가린 뒤 저장합니다. 도착하면 입고 처리로 재고에 바로 더해집니다.</p>
+      </article>
+      <article class="feature f-report">
+        <h3>지원금 정산 <span class="pro-tag">프로</span></h3>
+        <p>기간과 팀을 고르면 학교에 낼 구매 내역 엑셀(품목별·건별·팀별)과 영수증 묶음을 만듭니다. 영수증이 빠진 구매도 미리 알려 줍니다.</p>
+      </article>
+    </div>
+    <div class="report-shot"><img src="/assets/intro-report.jpg" width="840" height="510" loading="lazy" alt="지원금 정산 리포트 창: 기간과 팀을 고르면 구매 건수, 품목 수, 합계 금액, 영수증 장수가 보이고 엑셀 받기와 영수증 모아 인쇄 버튼이 있음"></div>
+  </section>
+
+  <section class="block" id="pricing" aria-labelledby="priceTitle">
+    <h2 class="sec-title" id="priceTitle">요금</h2>
+    <p class="sec-lead">서버 비용은 따로 받지 않습니다. 동아리 전용 저장 공간의 무료 한도 안에서 운영되고, 사진이 아주 많아져 한도에 가까워지면 미리 알려 드립니다.</p>
+    <div class="plans">
+      <article class="plan basic">
+        <h3>기본</h3>
+        <div class="price"><b>30,000원</b><span>설치 1회</span></div>
+        <ul>
+          <li>동아리 전용 주소와 입장 코드</li>
+          <li>재고·공구·부품·소모품 관리와 사용 기록</li>
+          <li>구매·배송 기록, 주문 화면 사진 자동 입력</li>
+          <li>영수증 사진 보관과 크게 보기</li>
+        </ul>
+      </article>
+      <article class="plan pro">
+        <h3>프로 <span class="pro-tag">추천</span></h3>
+        <div class="price"><b>50,000원</b><span>1년 · 설치비 포함</span></div>
+        <ul>
+          <li>기본의 모든 기능</li>
+          <li>지원금 정산 리포트 엑셀 (품목별·건별·팀별)</li>
+          <li>기간·팀별 영수증 모아 인쇄</li>
+          <li>1년 동안 새 기능 업데이트와 문의 대응</li>
+        </ul>
+      </article>
+    </div>
+    <p class="note">결제는 신청 후 연락드릴 때 계좌이체로 안내합니다. 기본으로 시작해서 나중에 프로로 바꿔도 그동안의 기록으로 바로 정산 리포트를 만들 수 있습니다.</p>
+  </section>
+
+  <section class="block" aria-labelledby="stepTitle">
+    <h2 class="sec-title" id="stepTitle">진행 순서</h2>
+    <ol class="steps">
+      <li><b>신청</b><span>아래 양식에 동아리와 연락처를 남깁니다.</span></li>
+      <li><b>연락·결제</b><span>필요한 팀 구성과 요금제를 확인하고 결제를 안내합니다.</span></li>
+      <li><b>설치</b><span>동아리 전용 주소와 입장 코드를 만들어 전달합니다.</span></li>
+      <li><b>사용 시작</b><span>주소와 코드를 동아리원에게 나눠 주면 바로 씁니다.</span></li>
+    </ol>
+  </section>
+
+  <section class="block" aria-labelledby="faqTitle">
+    <h2 class="sec-title" id="faqTitle">자주 묻는 질문</h2>
+    <div class="faq">
+      <details><summary>다른 동아리와 데이터가 섞이지 않나요?</summary><p>동아리마다 저장 공간, 주소, 입장 코드가 모두 따로입니다. 다른 동아리는 우리 기록을 볼 수 없습니다.</p></details>
+      <details><summary>입장 코드가 새어 나가면요?</summary><p>코드를 바꾸면 이미 들어와 있던 기기도 모두 새 코드를 다시 넣어야 합니다. 졸업생이 나갈 때 학기마다 바꾸는 것을 권합니다.</p></details>
+      <details><summary>영수증 사진에 개인정보가 있는데 괜찮나요?</summary><p>사진을 올릴 때 받는 사람 이름·전화번호·주소를 끌어서 가리고, 가린 사진만 저장합니다. 주문 화면의 글자 읽기는 휴대폰·PC 안에서만 하고 밖으로 보내지 않습니다.</p></details>
+      <details><summary>자작차 동아리가 아니어도 쓸 수 있나요?</summary><p>네. 공구를 빌려 쓰고 소모품을 사서 채우는 곳이면 로봇·드론·메이커 동아리나 실습실에서도 그대로 씁니다. 팀 이름은 설치할 때 동아리에 맞춰 드립니다.</p></details>
+    </div>
+  </section>
+
+  <section class="block" id="apply" aria-labelledby="applyTitle">
+    <h2 class="sec-title" id="applyTitle">설치 신청</h2>
+    <p class="sec-lead">남겨 주신 연락처로 연락드려 요금제와 설치 일정을 안내합니다.</p>
+    <div class="apply">
+      <form id="applyForm" novalidate>
+        <div class="field"><label for="aClub">동아리·팀 이름 <span class="req">*</span></label><input id="aClub" maxlength="60" required autocomplete="organization"></div>
+        <div class="field"><label for="aSchool">학교</label><input id="aSchool" maxlength="60"></div>
+        <div class="field"><label for="aName">담당자 이름 <span class="req">*</span></label><input id="aName" maxlength="30" required autocomplete="name"></div>
+        <div class="field"><label for="aContact">연락처 <span class="req">*</span></label><input id="aContact" maxlength="80" required placeholder="이메일 또는 카카오톡 아이디"></div>
+        <div class="field full"><label for="aPlan">원하는 요금제</label>
+          <select id="aPlan"><option value="상담">아직 모르겠어요 (상담)</option><option value="기본">기본 · 30,000원</option><option value="프로">프로 · 연 50,000원</option></select></div>
+        <div class="field full"><label for="aMemo">남길 말</label><textarea id="aMemo" maxlength="500" placeholder="예: 팀은 6개, 공구 대여가 제일 급해요"></textarea></div>
+        <div class="consent">
+          <dl>
+            <dt>수집 항목</dt><dd>담당자 이름, 연락처, 동아리·학교 이름</dd>
+            <dt>목적</dt><dd>설치 상담과 안내 연락</dd>
+            <dt>보관 기간</dt><dd>상담이 끝난 뒤 1년 안에 파기</dd>
+          </dl>
+          <p style="margin-top:6px">동의하지 않을 수 있지만, 그러면 신청할 수 없습니다.</p>
+          <label><input type="checkbox" id="aConsent"> 개인정보 수집·이용에 동의합니다 <span class="req">*</span></label>
+        </div>
+        <div class="form-foot"><button class="btn primary" type="submit" id="aGo">신청 보내기</button><p class="msg" id="aMsg" role="status" aria-live="polite"></p></div>
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    <span>STORAGE · 동아리 부품 창고 관리</span>
+    <a href="/">이미 쓰고 있다면: 우리 동아리 STORAGE 열기</a>
+  </footer>
+</main>
+
+<script>
+/*FIREBASE_CONFIG*/
+</script>
+<script type="module">
+const form = document.getElementById("applyForm"), msg = document.getElementById("aMsg"), go = document.getElementById("aGo");
+const val = (id) => document.getElementById(id).value.trim();
+function say(text, kind) { msg.textContent = text; msg.className = "msg" + (kind ? " " + kind : ""); }
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = { club: val("aClub"), school: val("aSchool"), name: val("aName"), contact: val("aContact"), plan: document.getElementById("aPlan").value, memo: val("aMemo"), consent: document.getElementById("aConsent").checked };
+  const miss = !data.club ? "aClub" : !data.name ? "aName" : !data.contact ? "aContact" : "";
+  if (miss) { say("동아리·팀 이름, 담당자 이름, 연락처를 적어 주세요.", "err"); document.getElementById(miss).focus(); return; }
+  if (!data.consent) { say("개인정보 수집·이용에 동의해야 신청할 수 있습니다.", "err"); document.getElementById("aConsent").focus(); return; }
+  go.disabled = true; say("보내는 중…");
+  try {
+    const cfg = window.GGOOLCHA_FIREBASE || {};
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js");
+    const { getFirestore, collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js");
+    const db = getFirestore(initializeApp(cfg, "intro"));
+    await addDoc(collection(db, "leads"), { ...data, createdAt: serverTimestamp() });
+    form.reset(); say("신청을 받았습니다. 적어 주신 연락처로 연락드릴게요.", "ok");
+    go.textContent = "신청 완료";
+  } catch (err) {
+    console.warn(err); go.disabled = false;
+    say("신청을 보내지 못했습니다. 인터넷 연결을 확인하고 잠시 뒤 다시 보내 주세요.", "err");
+  }
+});
+</script>
+</body>
+</html>

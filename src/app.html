@@ -290,6 +290,35 @@ dialog::backdrop { background: rgba(10, 14, 12, 0.45); }
 @media (max-width: 560px) { #photoDlg .pv-hint { display: none; } #photoDlg .pv-stage { height: calc(100vh - 250px); height: calc(100dvh - 250px); } #photoDlg .dlg { gap: 10px; padding: 14px; } }
 #photoDlg .pv-pct { min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
 .price-del { white-space: nowrap; }
+/* 지원금 정산 리포트 */
+.pro-tag { font-family: var(--font-num); font-style: italic; font-weight: 700; font-size: 11.5px; line-height: 1; padding: 3px 6px 2px; border-radius: 3px; background: var(--carbon); color: #fff; }
+.rp-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; }
+.rp-stats > div { display: grid; padding: 8px 12px; background: var(--surface-2); border-left: 3px solid var(--ink-2); }
+.rp-stats > div:nth-child(3) { border-left-color: var(--red); }
+.rp-stats span { font-size: 12.5px; color: var(--muted); }
+.rp-stats b { font-family: var(--font-num); font-style: italic; font-weight: 700; font-size: 22px; line-height: 1.15; }
+.rp-warn { margin: 8px 0 0; font-size: 13px; color: var(--warn); }
+.rp-lock { display: grid; gap: 6px; padding: 12px 14px; border-radius: var(--r); background: var(--surface-2); border-left: 4px solid var(--carbon); font-size: 14px; }
+.rp-lock p { margin: 0; }
+@media (max-width: 560px) { .rp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } #reportForm .form { grid-template-columns: 1fr 1fr !important; } #reportForm .form .field:last-child { grid-column: 1 / -1; } }
+.site-foot { margin: 28px 0 0; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.site-foot a { color: var(--ink-2); }
+/* 영수증 모아 인쇄: 화면에는 안 보이고 인쇄할 때만 */
+#printArea { display: none; }
+@media print {
+  @page { size: A4; margin: 12mm; }
+  body { background: #fff !important; color: #000 !important; padding: 0 !important; }
+  body > *:not(#printArea) { display: none !important; }
+  #printArea { display: block !important; font-family: var(--font-sans); font-size: 10.5pt; }
+  #printArea h1 { font-size: 16pt; margin: 0 0 2mm; }
+  #printArea h2 { font-size: 11pt; margin: 0 0 2mm; }
+  #printArea > p { margin: 0 0 4mm; }
+  #printArea table { border-collapse: collapse; width: 100%; font-size: 9.5pt; margin-bottom: 6mm; }
+  #printArea th, #printArea td { border: 0.3mm solid #888; padding: 1.2mm 2mm; text-align: left; }
+  #printArea .num { text-align: right; }
+  #printArea .pa-rec { break-inside: avoid; page-break-inside: avoid; margin: 0 0 7mm; }
+  #printArea .pa-rec img { display: block; max-width: 100%; max-height: 235mm; margin: 0 0 2mm; border: 0.3mm solid #aaa; }
+}
 
 .toast {
   position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
@@ -629,6 +658,7 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
           <button type="button" data-bview="items" aria-pressed="true">품목별 가격</button>
           <button type="button" data-bview="orders" aria-pressed="false">구매 건별</button>
         </div>
+        <button class="btn" type="button" id="reportBtn"><svg class="icon"><use href="#i-receipt"/></svg>정산 리포트<span class="pro-tag" id="reportProTag" hidden>프로</span></button>
         <button class="btn primary" type="button" id="buyBtn2"><svg class="icon"><use href="#i-receipt"/></svg>구매 등록</button>
       </div>
     </div>
@@ -649,6 +679,7 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
     <p class="hint" style="margin-top:10px">주문번호와 운송장 번호로 추적합니다. ‘배송 조회’를 누르면 택배 조회 화면이, ‘주문 내역’을 누르면 해당 쇼핑몰이 새 탭으로 열립니다. 도착하면 ‘입고 처리’로 재고와 구매현황에 바로 옮길 수 있습니다.</p>
     <div class="ship-list" id="shipList"></div>
   </section>
+  <footer class="site-foot"><a id="introLink" href="/intro" target="_blank" rel="noopener">STORAGE 소개 · 다른 동아리에도 설치하기</a></footer>
 </div>
 
 <!-- 품목 1개 등록·편집 -->
@@ -921,6 +952,27 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
 <datalist id="mallList"><option value="네이버"><option value="쿠팡"><option value="한국미스미"><option value="알리익스프레스"></datalist>
 <datalist id="courierList"><option value="CJ대한통운"><option value="한진택배"><option value="롯데택배"><option value="우체국택배"><option value="로젠택배"><option value="쿠팡 로켓배송"><option value="해외 배송"></datalist>
 
+<!-- 지원금 정산 리포트 -->
+<dialog id="reportDlg" aria-labelledby="reportTitle">
+  <form class="dlg" id="reportForm" method="dialog">
+    <div class="dlg-head"><h2 id="reportTitle">지원금 정산 리포트</h2><button class="btn small ghost" type="button" data-close>닫기</button></div>
+    <p class="hint" style="margin:0">기간과 팀을 고르면 학교에 낼 구매 내역 엑셀과 영수증 묶음을 만듭니다.</p>
+    <div class="form" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <div class="field"><label for="rpFrom">시작일</label><input id="rpFrom" type="date"></div>
+      <div class="field"><label for="rpTo">종료일</label><input id="rpTo" type="date"></div>
+      <div class="field"><label for="rpTeam">팀</label><select id="rpTeam"></select></div>
+    </div>
+    <div id="rpSum"></div>
+    <div class="rp-lock" id="rpLock" hidden>
+      <p><b>정산 리포트는 프로 요금제 기능입니다.</b></p>
+      <p>위 요약은 지금도 볼 수 있고, 엑셀 받기와 영수증 모아 인쇄는 프로로 바꾸면 열립니다.</p>
+      <p><a id="rpPricing" href="/intro#pricing" target="_blank" rel="noopener">요금 보기</a></p>
+    </div>
+    <div class="dlg-foot"><div class="right"><button class="btn" type="button" id="rpPrint">영수증 모아 인쇄</button><button class="btn primary" type="button" id="rpXlsx">엑셀 받기</button></div></div>
+  </form>
+</dialog>
+
+<div id="printArea" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script>
@@ -2427,6 +2479,93 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
     } finally { btn.disabled = false; }
   }
 
+  // ---------- 지원금 정산 리포트 (프로 요금제) ----------
+  const SITE = Object.assign({ plan: "basic", proUntil: "", introUrl: "/intro" }, window.STORAGE_SITE || {});
+  const isPro = () => SITE.plan === "pro" && (!SITE.proUntil || today() <= SITE.proUntil);
+  function semesterStart() { const d = new Date(), y = d.getFullYear(), m = d.getMonth() + 1; return m >= 9 ? `${y}-09-01` : m >= 3 ? `${y}-03-01` : `${y - 1}-09-01`; }
+  function openReport() {
+    if (!$("#rpFrom").value) { $("#rpFrom").value = semesterStart(); $("#rpTo").value = today(); }
+    const cur = $("#rpTeam").value, ts = [...new Set(S.purchases.map((p) => p.team).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ko"));
+    $("#rpTeam").innerHTML = `<option value="">전체</option>` + ts.map((t) => `<option ${t === cur ? "selected" : ""}>${esc(t)}</option>`).join("");
+    $("#rpLock").hidden = isPro();
+    renderReport();
+    $("#reportDlg").showModal();
+  }
+  function reportRows() {
+    const from = $("#rpFrom").value || "0000-00-00", to = $("#rpTo").value || "9999-12-31", team = $("#rpTeam").value;
+    return S.purchases.filter((p) => (p.date || "") >= from && (p.date || "") <= to && (!team || p.team === team))
+      .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")) || (a.createdAt || 0) - (b.createdAt || 0));
+  }
+  function renderReport() {
+    const ps = reportRows(), lines = ps.reduce((a, p) => a + (p.lines || []).length, 0), total = ps.reduce((a, p) => a + purchaseTotal(p), 0);
+    const rec = ps.reduce((a, p) => a + (p.receipts || []).length, 0), noRec = ps.filter((p) => !(p.receipts || []).length), noAmt = ps.filter((p) => !purchaseTotal(p));
+    $("#rpSum").innerHTML = `<div class="rp-stats">${[["구매", `${ps.length}건`], ["품목", `${lines}줄`], ["합계", won(total)], ["영수증", `${rec}장`]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("")}</div>` +
+      (noRec.length ? `<p class="rp-warn">영수증이 없는 구매 ${noRec.length}건: ${noRec.slice(0, 4).map((p) => esc(`${p.date || "날짜 없음"} ${p.vendor || p.team || ""}`.trim())).join(", ")}${noRec.length > 4 ? " 외" : ""}. 정산 전에 영수증을 붙여 주세요.</p>` : "") +
+      (noAmt.length ? `<p class="rp-warn">금액이 비어 있는 구매 ${noAmt.length}건이 있습니다.</p>` : "") +
+      (!ps.length ? `<p class="hint" style="margin:8px 0 0">이 기간에는 구매 기록이 없습니다. 기간이나 팀을 바꿔 보세요.</p>` : "");
+    $("#rpXlsx").disabled = !isPro() || !ps.length; $("#rpPrint").disabled = !isPro() || !ps.length;
+  }
+  let xlsxLoading = null;
+  const loadXlsx = () => (window.XLSX ? Promise.resolve() : (xlsxLoading ||= loadScriptOnce("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js").catch((e) => { xlsxLoading = null; throw e; })));
+  function sheetOf(title, head, rows, widths, moneyCols) {
+    const ws = XLSX.utils.aoa_to_sheet([[title], [], head, ...rows]);
+    ws["!cols"] = widths.map((w) => ({ wch: w }));
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+    for (let r = 3; r <= range.e.r; r++) for (const c of moneyCols) { const cell = ws[XLSX.utils.encode_cell({ r, c })]; if (cell && cell.t === "n") cell.z = "#,##0"; }
+    return ws;
+  }
+  async function reportXlsx() {
+    const ps = reportRows(); if (!ps.length || !isPro()) return;
+    const btn = $("#rpXlsx"), old = btn.textContent; btn.disabled = true; btn.textContent = "만드는 중…";
+    try {
+      await loadXlsx();
+      const from = $("#rpFrom").value, to = $("#rpTo").value, team = $("#rpTeam").value || "전체", span = `${from} ~ ${to}, 팀: ${team}`;
+      const rows1 = []; let n = 0, lineSum = 0;
+      for (const p of ps) for (const ln of p.lines || []) {
+        const amt = lineAmount(ln); lineSum += amt || 0;
+        rows1.push([++n, p.date || "", p.team || "", p.vendor || "", ln.name || "", ln.spec || "", ln.category || "", Number(ln.qty) || 0, ln.unit || "개", Number(ln.unitPrice) > 0 ? Number(ln.unitPrice) : "", amt != null ? amt : "", ln.purpose || "", ln.usage || "", (p.receipts || []).length, p.memo || ""]);
+      }
+      rows1.push([], ["", "", "", "", "합계 (단가를 적은 품목)", "", "", "", "", "", lineSum]);
+      const total = ps.reduce((a, p) => a + purchaseTotal(p), 0);
+      const rows2 = ps.map((p, i) => [i + 1, p.date || "", p.team || "", p.vendor || "", (p.lines || []).length, purchaseTotal(p) || "", (p.receipts || []).length, p.memo || "", p.by || ""]);
+      rows2.push([], ["", "", "", "", "합계", total]);
+      const byTeam = {}; ps.forEach((p) => { const t = p.team || "(팀 없음)"; byTeam[t] ||= [0, 0]; byTeam[t][0] += 1; byTeam[t][1] += purchaseTotal(p); });
+      const rows3 = Object.entries(byTeam).sort((a, b) => a[0].localeCompare(b[0], "ko")).map(([t, [c, a]]) => [t, c, a]);
+      rows3.push([], ["합계", ps.length, total]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, sheetOf(`구매 내역 (${span})`, ["번호", "구매일", "팀", "구매처", "품목", "규격", "분류", "수량", "단위", "단가(원)", "금액(원)", "구매 목적", "사용처", "영수증(장)", "메모"], rows1, [5, 11, 10, 16, 28, 12, 7, 6, 5, 10, 11, 16, 14, 9, 22], [9, 10]), "구매 내역");
+      XLSX.utils.book_append_sheet(wb, sheetOf(`구매 건별 합계 (${span})`, ["번호", "구매일", "팀", "구매처", "품목 수", "결제 금액(원)", "영수증(장)", "메모", "등록한 사람"], rows2, [5, 11, 10, 18, 8, 13, 9, 26, 22], [5]), "건별 합계");
+      XLSX.utils.book_append_sheet(wb, sheetOf(`팀별 합계 (${from} ~ ${to})`, ["팀", "구매 건수", "금액(원)"], rows3, [14, 10, 14], [2]), "팀별 합계");
+      XLSX.writeFile(wb, `정산_${team}_${from}_${to}.xlsx`.replace(/[\\/:*?"<>|]/g, "_"));
+      toast("정산 엑셀을 내려받았습니다.");
+    } catch (e) { console.warn(e); toast("엑셀을 만들지 못했습니다. 인터넷 연결을 확인하고 다시 해 주세요."); }
+    finally { btn.textContent = old; btn.disabled = false; }
+  }
+  async function reportPrint() {
+    const ps = reportRows(); if (!ps.length || !isPro()) return;
+    const from = $("#rpFrom").value, to = $("#rpTo").value, team = $("#rpTeam").value || "전체", total = ps.reduce((a, p) => a + purchaseTotal(p), 0);
+    const amt = (p) => (purchaseTotal(p) ? won(purchaseTotal(p)) : "금액 미기재");
+    $("#printArea").innerHTML = `<h1>영수증 모음</h1><p>기간 ${esc(from)} ~ ${esc(to)} · 팀 ${esc(team)} · 구매 ${ps.length}건 · 합계 ${won(total)}</p>
+      <table><thead><tr><th>번호</th><th>구매일</th><th>팀</th><th>구매처</th><th class="num">금액</th><th>영수증</th></tr></thead><tbody>` +
+      ps.map((p, i) => `<tr><td>${i + 1}</td><td>${esc(p.date || "")}</td><td>${esc(p.team || "")}</td><td>${esc(p.vendor || "")}</td><td class="num">${amt(p)}</td><td>${(p.receipts || []).length}장</td></tr>`).join("") + `</tbody></table>` +
+      ps.map((p, i) => `<section class="pa-rec"><h2>${i + 1}. ${esc(p.date || "")} · ${esc(p.team || "")}${p.vendor ? ` · ${esc(p.vendor)}` : ""} · ${amt(p)}</h2>` +
+        ((p.receipts || []).length ? p.receipts.map((r, k) => `<img src="${esc(photoUrl(r))}" alt="${i + 1}번 영수증 ${k + 1}">`).join("") : "<p>영수증 없음</p>") + "</section>").join("");
+    $("#reportDlg").close();
+    toast("영수증 사진을 불러오는 중…");
+    const t0 = Date.now();
+    while (Date.now() - t0 < 20000) {
+      const imgs = [...$("#printArea").querySelectorAll("img")];
+      if (imgs.every((im) => !String(im.getAttribute("src") || "").includes("#p=") && im.complete)) break;
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    window.print();
+  }
+  function applyPlan() {
+    $("#reportProTag").hidden = isPro();
+    const intro = SITE.introUrl || "/intro"; $("#introLink").href = intro; $("#rpPricing").href = intro + "#pricing";
+  }
+  applyPlan();
+
   // ---------- 이벤트 ----------
   function selectTab(which) {
     document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.tab === which)));
@@ -2490,6 +2629,11 @@ table.tbl td.num b, table.tbl td.num { font-family: var(--font-num); font-size: 
   $("#addBtn").addEventListener("click", () => openItem(null));
   $("#buyBtn").addEventListener("click", () => openBuy());
   $("#buyBtn2").addEventListener("click", () => openBuy());
+  $("#reportBtn").addEventListener("click", openReport);
+  ["#rpFrom", "#rpTo", "#rpTeam"].forEach((sel) => $(sel).addEventListener("change", renderReport));
+  $("#rpXlsx").addEventListener("click", reportXlsx);
+  $("#rpPrint").addEventListener("click", reportPrint);
+  window.addEventListener("afterprint", () => { $("#printArea").innerHTML = ""; });
   document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => b.closest("dialog").close()));
   $("#itemForm").addEventListener("submit", saveItem);
   $("#fName").addEventListener("input", refreshSameItem);

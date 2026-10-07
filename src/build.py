@@ -9,6 +9,8 @@ import pathlib, re
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 src = (ROOT / "src" / "app.html").read_text(encoding="utf-8")
 adapter = (ROOT / "src" / "adapter.js").read_text(encoding="utf-8")
+site_file = ROOT / "src" / "site-config.js"
+site = site_file.read_text(encoding="utf-8").strip() if site_file.exists() else 'window.STORAGE_SITE = { plan: "basic", proUntil: "", introUrl: "/intro" };'
 cfg_file = ROOT / "src" / "firebase-config.js"
 config = cfg_file.read_text(encoding="utf-8").strip() if cfg_file.exists() else """window.GGOOLCHA_FIREBASE = {
   apiKey: "",
@@ -80,6 +82,8 @@ out = f"""<!doctype html>
 <script>
 /* ===== Firebase 설정 (Firebase 콘솔 → 프로젝트 설정 → 내 앱 → SDK 설정 및 구성) ===== */
 {config}
+/* ===== 요금제 (src/site-config.js) ===== */
+{site}
 </script>
 {waiter}<script type="module">
 {adapter}
@@ -93,3 +97,10 @@ out = f"""<!doctype html>
 dest = ROOT / "index.html"
 dest.write_text(out, encoding="utf-8")
 print(f"wrote {dest} ({len(out.encode('utf-8')) // 1024} KB)")
+
+# 소개·요금 안내 페이지 (공개, 입장 코드 없음). 신청서는 Firestore leads 컬렉션에 쓰기만 한다.
+intro_src = ROOT / "src" / "intro.html"
+if intro_src.exists():
+    intro = swap(intro_src.read_text(encoding="utf-8"), "/*FIREBASE_CONFIG*/", config)
+    (ROOT / "intro.html").write_text(intro, encoding="utf-8")
+    print(f"wrote {ROOT / 'intro.html'} ({len(intro.encode('utf-8')) // 1024} KB)")
