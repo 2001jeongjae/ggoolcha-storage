@@ -1,5 +1,8 @@
 {
+  "cleanUrls": true,
   "functions": {
-    "api/read-order.js": { "maxDuration": 60 }
+    "api/read-order.js": {
+      "maxDuration": 60
+    }
   }
 }

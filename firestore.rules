@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// GGOOLCHA STORAGE 보안 규칙
+// STORAGE 보안 규칙
 // - 입장 코드를 맞힌 기기(members 명단)만 재고 데이터를 읽고 쓸 수 있다. 화면은 창을 열 때마다 코드를 다시 확인한다.
 // - 입장 코드는 config/club 문서의 code 값. 이 문서는 누구도 앱에서 읽거나 고칠 수 없고,
 //   Firebase 콘솔에서만 바꾼다.
@@ -39,5 +39,19 @@ service cloud.firestore {
     match /purchases/{id} { allow read, write: if isMember(); }
     match /ships/{id}     { allow read, write: if isMember(); }
     match /photos/{id}    { allow read, create, delete: if isMember(); }
+
+    // 소개 페이지(/intro)의 설치 신청서: 누구나 한 번 쓰기만 가능, 읽기·고치기는 Firebase 콘솔에서만
+    match /leads/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['club', 'school', 'name', 'contact', 'plan', 'memo', 'consent', 'createdAt'])
+        && request.resource.data.club is string && request.resource.data.club.size() > 0 && request.resource.data.club.size() <= 60
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 30
+        && request.resource.data.contact is string && request.resource.data.contact.size() > 0 && request.resource.data.contact.size() <= 80
+        && request.resource.data.get('school', '') is string && request.resource.data.get('school', '').size() <= 60
+        && request.resource.data.get('memo', '') is string && request.resource.data.get('memo', '').size() <= 500
+        && request.resource.data.plan in ['상담', '기본', '프로']
+        && request.resource.data.consent == true
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if false;
+    }
   }
 }

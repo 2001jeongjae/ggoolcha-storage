@@ -21,7 +21,10 @@ EV 자작차 동아리의 부품·공구·소모품 재고와 사용 기록을 �
 | `src/app.html` | 화면 원본 (HTML·CSS·JavaScript) |
 | `src/adapter.js` | 화면이 쓰는 저장소 연결을 Firebase로 이어 주는 연결부 |
 | `src/firebase-config.js` | Firebase 웹 앱 설정 값 |
-| `src/build.py` | 위 셋을 합쳐 `index.html`을 만드는 스크립트 (`python3 src/build.py`) |
+| `src/site-config.js` | 요금제(기본·프로)와 프로 기한 |
+| `src/intro.html` → `intro.html` | 공개 소개·요금·설치 신청 페이지 (`/intro`) |
+| `assets/` | 소개 페이지 화면 사진 |
+| `src/build.py` | 위 파일을 합쳐 `index.html`과 `intro.html`을 만드는 스크립트 (`python3 src/build.py`) |
 | `firestore.rules` | Firestore 보안 규칙 (입장 코드를 맞힌 기기만 접근) |
 | `api/read-order.js`, `vercel.json` | 예전 Gemini 사진 읽기용 서버 함수 (지금은 쓰지 않음) |
 
@@ -32,6 +35,32 @@ EV 자작차 동아리의 부품·공구·소모품 재고와 사용 기록을 �
 - 사진 자동 입력: 브라우저 안에서 [Tesseract.js](https://github.com/naptha/tesseract.js) OCR(한국어+영어)로 주문 화면 글자를 읽고, 규칙으로 구매일·구매처·금액·주문번호·품목(이름·규격·수량·단가·분류)·택배사·운송장을 뽑음. 사진과 글자는 기기 밖으로 나가지 않고, 키도 필요 없음. 이름·전화번호·주소는 먼저 가리고, 영수증에는 가린 사진만 저장
   - 처음 한 번 jsDelivr에서 글자 인식 엔진과 한국어·영어 데이터(약 8MB)를 내려받아 브라우저에 보관
   - 한 번 읽어서 품목 합계가 결제 금액과 안 맞으면 다른 설정으로 한 번 더 읽고 나은 쪽을 씀
+
+## 수익 운영 (다른 동아리에 설치해 주기)
+
+공개 소개 페이지 `/intro`에서 다른 동아리가 설치를 신청하고, 동아리마다 이 저장소를 복사한 전용 사이트를 만들어 준다. 동아리마다 저장 공간·주소·입장 코드가 따로라 데이터가 섞이지 않는다.
+
+| 요금제 | 가격 (소개 페이지 기준) | 내용 |
+| --- | --- | --- |
+| 기본 | 30,000원, 설치 1회 | 재고·공구·부품·소모품, 구매·배송, 사진 자동 입력 |
+| 프로 | 연 50,000원, 설치비 포함 | 기본 + 지원금 정산 리포트(엑셀) + 영수증 모아 인쇄 + 1년 업데이트·문의 대응 |
+
+가격과 문구는 `src/intro.html`에서 고친 뒤 `python3 src/build.py`.
+
+### 신청 확인
+Firebase 콘솔 → Firestore → `leads` 컬렉션. 신청서는 누구나 쓰기만 할 수 있고(보안 규칙), 읽기는 콘솔에서만 된다. 상담이 끝난 신청서는 1년 안에 지운다(소개 페이지에 그렇게 안내함).
+
+### 새 동아리 사이트 만들기 (약 20분)
+1. 이 저장소를 새 저장소로 복사 (GitHub → Use this template 또는 파일 업로드)
+2. 아래 "처음 설정하기" 1~3단계를 새 Firebase 프로젝트·새 Vercel 프로젝트로 그대로 진행
+3. `src/firebase-config.js`에 새 Firebase 설정, `src/site-config.js`에 요금제를 적고 `python3 src/build.py`
+4. 팀 이름이 다르면 `src/app.html`의 `const TEAMS = [...]` 수정
+5. 새 주소와 입장 코드를 동아리 담당자에게 전달
+
+### 요금제 바꾸기
+`src/site-config.js`의 `plan`을 `"pro"` 또는 `"basic"`으로, 프로 기한은 `proUntil: "YYYY-MM-DD"`(그날까지). 바꾼 뒤 빌드해서 올리면 된다. 기본 요금제에서는 정산 리포트 요약만 보이고 엑셀·인쇄 버튼은 잠긴다.
+
+> 저장소가 공개(Public)라 누구나 코드를 복사해 프로 기능을 켤 수 있다. 막고 싶으면 GitHub 저장소를 비공개(Private)로 바꾸면 된다(Vercel 무료 요금제에서도 비공개 저장소 배포 가능).
 
 ## 처음 설정하기
 
